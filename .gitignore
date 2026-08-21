@@ -1,0 +1,52 @@
+# ==========================================
+#  MSVC / Visual Studio C++ .gitignore
+# ==========================================
+
+# --- User-specific files and settings ---
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vcxproj.user
+
+# --- Build outputs (Executables, Libraries, Objects) ---
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+[Aa][Rr][Mm]64[Ee][Cc]/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+*.exe
+*.dll
+*.lib
+*.a
+*.so
+*.dylib
+*.exp
+*.ilk
+
+# --- Debug symbols and Profiler output ---
+*.pdb
+*.iobj
+*.ipdb
+*.pdb.swp
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# --- Visual C++ Cache and Intellisense files ---
+.vs/
+ipch/
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.cachefile
+*.VC.db
+*.VC.VC.opendb
