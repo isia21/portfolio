@@ -4,13 +4,18 @@
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, PSTR, int)
 {
-	CApplication application(hInstance);
+	CApplication::InitInstance();
+	CApplication* pApp = CApplication::GetInstance();
+	Utils::Init(pApp->GetWindowHandle());
 
-	if (!application.Initialize())
+	if (!pApp->Initialize(hInstance))
 	{
-		MessageBox(nullptr, "Failed to initialize application.", "Error", MB_OK | MB_ICONERROR);
+		Utils::Message("[ERROR] Failed to initialize application.");
 		return EXIT_FAILURE;
 	}
 
-	return application.Run();
+	return pApp->Run();
+
+
+	//return S_OK;
 }

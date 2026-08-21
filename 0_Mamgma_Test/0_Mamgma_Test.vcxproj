@@ -150,10 +150,13 @@
     <ClCompile Include="App\Application.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="Utils\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App\Application.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Utils\Singleton.h" />
+    <ClInclude Include="Utils\Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

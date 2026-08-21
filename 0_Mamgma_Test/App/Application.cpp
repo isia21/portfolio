@@ -2,8 +2,13 @@
 #include "Application.h"
 
 
-bool CApplication::Initialize()
+IMPLEMENT_SINGLETON(CApplication);
+
+bool CApplication::Initialize(HINSTANCE hInstance)
 {
+	Utils::ODS("[INFO] Initializing application...");
+	m_hInstance = hInstance;
+
 	if (!RegisterWindowClass())
 		return false;
 
@@ -18,13 +23,14 @@ bool CApplication::Initialize()
 
 	m_bRunning = true;
 
+	Utils::ODS("[INFO] Application initialized successfully.");
 	return true;
 }
 
 int CApplication::Run()
 {
 	MSG message = {};
-
+	Utils::ODS("[INFO] Entering main loop...");
 	while (m_bRunning)
 	{
 		while (PeekMessage(&message, nullptr, 0, 0, PM_REMOVE))
@@ -72,7 +78,7 @@ bool CApplication::RegisterWindowClass()
 
 bool CApplication::CreateApplicationWindow()
 {
-	RECT windowRect = { 0,0,m_width,m_height};
+	RECT windowRect = { 0,0,m_lWidth,m_lHeight};
 
 	if (!AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE))
 		return false;
@@ -125,7 +131,7 @@ bool CApplication::CreateOpenGLContext()
 		return false;
 
 	// Initial OpenGL state.
-	glViewport(0, 0, m_width, m_height);
+	glViewport(0, 0, m_lWidth, m_lHeight);
 	glClearColor(0.08f, 0.08f, 0.10f, 1.0f);
 
 	return true;
@@ -159,19 +165,21 @@ void CApplication::Resize(int width, int height)
 	if (width <= 0 || height <= 0)
 		return;
 
-	m_width = width;
-	m_height = height;
+	m_lWidth = width;
+	m_lHeight = height;
 
 	if (m_hGLRC == nullptr)
 		return;
 
-	glViewport(0, 0, m_width, m_height);
+	Utils::ODS("[INFO] Resizing window to %dx%d", m_lWidth, m_lHeight);
+	glViewport(0, 0, m_lWidth, m_lHeight);
 }
 
 void CApplication::Shutdown()
 {
 	m_bRunning = false;
 
+	Utils::ODS("[INFO] Shutting down application...");
 	if (m_hGLRC != nullptr)
 	{
 		// A context must no longer be current

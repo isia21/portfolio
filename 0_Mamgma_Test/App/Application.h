@@ -2,19 +2,21 @@
 
 class CApplication
 {
+	DECLARE_SINGLETON(CApplication);
+
 public:
-	CApplication(HINSTANCE hInstance)
-		: m_hInstance(hInstance), m_hWnd(nullptr), m_hDC(nullptr), 
+	CApplication()
+		: m_hInstance(nullptr), m_hWnd(nullptr), m_hDC(nullptr),
 		m_hGLRC(nullptr), 
 		m_bRunning(false),
-		m_width(1280), m_height(720) {}
+		m_lWidth(1280), m_lHeight(720) {}
 
 	~CApplication() { Shutdown(); }
 
 public:
-	bool Initialize();
+	bool Initialize(HINSTANCE hInstance);
 	int Run();
-
+	HWND GetWindowHandle() const { return m_hWnd; }
 private:
 	bool RegisterWindowClass();
 	bool CreateApplicationWindow();
@@ -39,6 +41,6 @@ private:
 
 	bool m_bRunning;
 
-	int m_width;
-	int m_height;
+	int m_lWidth;
+	int m_lHeight;
 };
