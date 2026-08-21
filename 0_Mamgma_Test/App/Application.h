@@ -1,4 +1,5 @@
 #pragma once
+class CRenderer;
 
 class CApplication
 {
@@ -6,12 +7,12 @@ class CApplication
 
 public:
 	CApplication()
-		: m_hInstance(nullptr), m_hWnd(nullptr), m_hDC(nullptr),
-		m_hGLRC(nullptr), 
+		: m_hInstance(nullptr), m_hWnd(nullptr),
+		m_pRenderer(nullptr),
 		m_bRunning(false),
-		m_lWidth(1280), m_lHeight(720) {}
+		m_lWidth(1280), m_lHeight(720) {};
 
-	~CApplication() { Shutdown(); }
+	~CApplication();
 
 public:
 	bool Initialize(HINSTANCE hInstance);
@@ -21,7 +22,6 @@ private:
 	bool RegisterWindowClass();
 	bool CreateApplicationWindow();
 
-	bool CreateOpenGLContext();
 	void Update();
 	void Render();
 
@@ -34,10 +34,9 @@ private:
 
 private:
 	HINSTANCE m_hInstance;
+	CRenderer* m_pRenderer;
 
 	HWND m_hWnd;
-	HDC m_hDC;
-	HGLRC m_hGLRC;
 
 	bool m_bRunning;
 

@@ -1,8 +1,13 @@
 #include "stdafx.h"
+#include "../Engine/Renderer.h"
 #include "Application.h"
 
-
 IMPLEMENT_SINGLETON(CApplication);
+
+CApplication::~CApplication()
+{
+	SAFEDELETE(m_pRenderer);
+}
 
 bool CApplication::Initialize(HINSTANCE hInstance)
 {
@@ -15,11 +20,12 @@ bool CApplication::Initialize(HINSTANCE hInstance)
 	if (!CreateApplicationWindow())
 		return false;
 
-	if (!CreateOpenGLContext())
-		return false;
-
 	ShowWindow(m_hWnd, SW_SHOW);
 	UpdateWindow(m_hWnd);
+	m_pRenderer = new CRenderer();
+
+	if (!m_pRenderer->Init(m_hWnd, m_lWidth, m_lHeight, false))
+		return false;
 
 	m_bRunning = true;
 
@@ -99,45 +105,6 @@ bool CApplication::CreateApplicationWindow()
 	return true;
 }
 
-bool CApplication::CreateOpenGLContext()
-{
-	m_hDC = GetDC(m_hWnd);
-	if (m_hDC == nullptr)
-		return false;
-
-	PIXELFORMATDESCRIPTOR pixelFormatDescriptor = {};
-
-	pixelFormatDescriptor.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-	pixelFormatDescriptor.nVersion = 1;
-	pixelFormatDescriptor.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-	pixelFormatDescriptor.iPixelType = PFD_TYPE_RGBA;
-	pixelFormatDescriptor.cColorBits = 32;
-	pixelFormatDescriptor.cDepthBits = 24;
-	pixelFormatDescriptor.cStencilBits = 8;
-	pixelFormatDescriptor.iLayerType = PFD_MAIN_PLANE;
-
-	const int pixelFormat = ChoosePixelFormat(m_hDC, &pixelFormatDescriptor);
-	if (pixelFormat == 0)
-		return false;
-
-	if (!SetPixelFormat(m_hDC, pixelFormat, &pixelFormatDescriptor))
-		return false;
-
-	m_hGLRC = wglCreateContext(m_hDC);
-	if (m_hGLRC == nullptr)
-		return false;
-
-	if (!wglMakeCurrent(m_hDC, m_hGLRC))
-		return false;
-
-	// Initial OpenGL state.
-	glViewport(0, 0, m_lWidth, m_lHeight);
-	glClearColor(0.08f, 0.08f, 0.10f, 1.0f);
-
-	return true;
-}
-
-
 void CApplication::Update()
 {
 	// TODO:
@@ -152,12 +119,8 @@ void CApplication::Update()
 
 void CApplication::Render()
 {
-	// Temporary renderer placeholder.
-	//
-	// The actual Renderer class will replace this code.
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	SwapBuffers(m_hDC);
+	m_pRenderer->Clear();
+	m_pRenderer->Render();
 }
 
 void CApplication::Resize(int width, int height)
@@ -168,11 +131,10 @@ void CApplication::Resize(int width, int height)
 	m_lWidth = width;
 	m_lHeight = height;
 
-	if (m_hGLRC == nullptr)
-		return;
-
 	Utils::ODS("[INFO] Resizing window to %dx%d", m_lWidth, m_lHeight);
-	glViewport(0, 0, m_lWidth, m_lHeight);
+
+	if (m_pRenderer != nullptr)
+		m_pRenderer->Resize(m_lWidth, m_lHeight);
 }
 
 void CApplication::Shutdown()
@@ -180,20 +142,9 @@ void CApplication::Shutdown()
 	m_bRunning = false;
 
 	Utils::ODS("[INFO] Shutting down application...");
-	if (m_hGLRC != nullptr)
-	{
-		// A context must no longer be current
-		// before it is destroyed.
-		wglMakeCurrent(nullptr, nullptr);
-		wglDeleteContext(m_hGLRC);
-		m_hGLRC = nullptr;
-	}
 
-	if (m_hDC != nullptr && m_hWnd != nullptr)
-	{
-		ReleaseDC(m_hWnd, m_hDC);
-		m_hDC = nullptr;
-	}
+	if (m_pRenderer != nullptr)
+		m_pRenderer->Shutdown();
 
 	if (m_hWnd != nullptr)
 	{
