@@ -1,9 +1,14 @@
 #include "stdafx.h"
+
 #include "Renderer.h"
 #include "3DObject.h"
+#include "Camera.h"
 
-#include <vector>
-
+namespace
+{
+	typedef BOOL(WINAPI* PFNWGLSWAPINTERVALEXTPROC)(int);
+	PFNWGLSWAPINTERVALEXTPROC g_wglSwapIntervalEXT = nullptr;
+}
 //-----------------------------------------------------------------------------
 // Renderer
 //-----------------------------------------------------------------------------
@@ -11,6 +16,7 @@ CRenderer::CRenderer()
 	: m_hWnd(nullptr)
 	, m_hDC(nullptr)
 	, m_hGLRC(nullptr)
+	, m_pCamera(nullptr)
 	, m_lWndWidth(0)
 	, m_lWndHeight(0)
 	, m_lViewportWidth(0)
@@ -18,6 +24,7 @@ CRenderer::CRenderer()
 	, m_lWndPosX(0)
 	, m_lWndPosY(0)
 	, m_bFullScreen(false)
+	, m_bVSync(false)
 	, m_bLockFPS(false)
 	, m_lFPSLock(60)
 	, m_bInitialized(false)
@@ -61,6 +68,7 @@ bool CRenderer::Init(HWND hWnd, int lRenderViewportWidth, int lRenderViewportHei
 		ShutdownOpenGL();
 		return false;
 	}
+	SetVSync(m_bVSync);
 
 	m_bInitialized = true;
 
@@ -104,6 +112,8 @@ bool CRenderer::InitOpenGL()
 
 	if (!InitRenderContext())
 		return false;
+
+	g_wglSwapIntervalEXT = reinterpret_cast<PFNWGLSWAPINTERVALEXTPROC>(wglGetProcAddress("wglSwapIntervalEXT"));
 
 	glViewport(0, 0, m_lViewportWidth, m_lViewportHeight);
 
@@ -163,6 +173,17 @@ bool CRenderer::InitRenderContext()
 
 void CRenderer::ShutdownOpenGL()
 {
+
+	// --- Font cache clear ---
+	for (auto& pair : m_FontCache)
+	{
+		if (pair.second.lBase != 0)
+			glDeleteLists(pair.second.lBase, 256);
+		if (pair.second.hFont != nullptr)
+			DeleteObject(pair.second.hFont);
+	}
+	m_FontCache.clear();
+
 	if (m_hGLRC != nullptr)
 	{
 		if (wglGetCurrentContext() == m_hGLRC)
@@ -194,6 +215,13 @@ void CRenderer::Render()
 {
 	if (!m_bInitialized)
 		return;
+
+
+	if (m_pCamera != nullptr)
+	{
+		m_pCamera->ApplyProjection();
+		m_pCamera->ApplyView();
+	}
 
 	RenderGrid();
 	Render3D();
@@ -323,13 +351,26 @@ void CRenderer::DrawText(int lX, int lY, const char* pszText,
 	command.Text.lX = lX;
 	command.Text.lY = lY;
 	command.Text.dwColor = dwColor;
-	command.Text.pszText = pszText;
+	//	command.Text.pszText = pszText;
 	command.Text.lFontSize = lFontSize;
 	command.Text.eAlignment = eAlignment;
+
+	strncpy_s(command.Text.szText, sizeof(command.Text.szText), pszText, _TRUNCATE);
 
 	m_vLayer2D.push_back(command);
 }
 
+void CRenderer::DrawTextF(int lX, int lY, unsigned int dwColor, int lFontSize, ETextAlignment eAlignment, const char* pszFormat, ...)
+{
+	char szBuffer[1024] = {};
+
+	va_list args;
+	va_start(args, pszFormat);
+	vsnprintf_s(szBuffer, sizeof(szBuffer), _TRUNCATE, pszFormat, args);
+	va_end(args);
+
+	DrawText(lX, lY, szBuffer, dwColor, lFontSize, eAlignment);
+}
 
 //-----------------------------------------------------------------------------
 // 2D
@@ -385,7 +426,6 @@ void CRenderer::Render2D()
 	glMatrixMode(GL_MODELVIEW);
 }
 
-
 void CRenderer::RenderRect(const RenderCommand2D& command)
 {
 	const float fR = static_cast<float>((command.Rect.dwColor >> 24) & 0xFF) / 255.0f;
@@ -404,53 +444,35 @@ void CRenderer::RenderRect(const RenderCommand2D& command)
 	glEnd();
 }
 
-
 void CRenderer::RenderText(const RenderCommand2D& command)
 {
-	if (command.Text.pszText == nullptr)
-		return;
-
 	if (command.Text.lFontSize <= 0)
 		return;
 
-	HFONT hFont = CreateFontA(
-		-command.Text.lFontSize,
-		0,
-		0,
-		0,
-		FW_NORMAL,
-		FALSE,
-		FALSE,
-		FALSE,
-		ANSI_CHARSET,
-		OUT_DEFAULT_PRECIS,
-		CLIP_DEFAULT_PRECIS,
-		DEFAULT_QUALITY,
-		DEFAULT_PITCH | FF_DONTCARE,
-		"Arial");
+	FontData fd = {};
+	auto it = m_FontCache.find(command.Text.lFontSize);
 
-	if (hFont == nullptr)
-		return;
-
-	HFONT hOldFont = static_cast<HFONT>(SelectObject(m_hDC, hFont));
-
-	const GLuint lFontBase = glGenLists(256);
-	if (lFontBase == 0)
+	if (it != m_FontCache.end())
 	{
-		SelectObject(m_hDC, hOldFont);
-		DeleteObject(hFont);
-
-		return;
+		fd = it->second;
 	}
-
-	if (!wglUseFontBitmapsA(m_hDC, 0, 256, lFontBase))
+	else
 	{
-		glDeleteLists(lFontBase, 256);
+		fd.hFont = CreateFontA(
+			-command.Text.lFontSize, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+			ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
+			DEFAULT_PITCH | FF_DONTCARE, "Arial");
 
-		SelectObject(m_hDC, hOldFont);
-		DeleteObject(hFont);
+		if (fd.hFont != nullptr)
+		{
+			HFONT hOldFont = static_cast<HFONT>(SelectObject(m_hDC, fd.hFont));
+			fd.lBase = glGenLists(256);
+			wglUseFontBitmapsA(m_hDC, 0, 256, fd.lBase);
+			SelectObject(m_hDC, hOldFont);
 
-		return;
+			m_FontCache[command.Text.lFontSize] = fd;
+		}
+		else return;
 	}
 
 	const float fR = static_cast<float>((command.Text.dwColor >> 24) & 0xFF) / 255.0f;
@@ -459,8 +481,10 @@ void CRenderer::RenderText(const RenderCommand2D& command)
 	const float fA = static_cast<float>(command.Text.dwColor & 0xFF) / 255.0f;
 	glColor4f(fR, fG, fB, fA);
 
+	HFONT hOldFont = static_cast<HFONT>(SelectObject(m_hDC, fd.hFont));
 	SIZE textSize = {};
-	GetTextExtentPoint32A(m_hDC, command.Text.pszText, static_cast<int>(strlen(command.Text.pszText)), &textSize);
+	GetTextExtentPoint32A(m_hDC, command.Text.szText, static_cast<int>(strlen(command.Text.szText)), &textSize);
+	SelectObject(m_hDC, hOldFont);
 
 	int lX = command.Text.lX;
 	switch (command.Text.eAlignment)
@@ -468,42 +492,31 @@ void CRenderer::RenderText(const RenderCommand2D& command)
 	case TEXT_ALIGN_CENTER:
 		lX -= textSize.cx / 2;
 		break;
-
 	case TEXT_ALIGN_RIGHT:
 		lX -= textSize.cx;
 		break;
-
 	case TEXT_ALIGN_LEFT:
 	default:
 		break;
 	}
 
 	glRasterPos2i(lX, command.Text.lY);
-
-	glListBase(lFontBase);
-	glCallLists(static_cast<GLsizei>(strlen(command.Text.pszText)), GL_UNSIGNED_BYTE, command.Text.pszText);
-	glDeleteLists(lFontBase, 256);
-
-	SelectObject(m_hDC, hOldFont);
-	DeleteObject(hFont);
+	glListBase(fd.lBase);
+	glCallLists(static_cast<GLsizei>(strlen(command.Text.szText)), GL_UNSIGNED_BYTE, command.Text.szText);
 }
-
 
 //-----------------------------------------------------------------------------
 // Queue
 //-----------------------------------------------------------------------------
-
 void CRenderer::ClearRenderQueues()
 {
 	m_vObjects3D.clear();
 	m_vLayer2D.clear();
 }
 
-
 //-----------------------------------------------------------------------------
 // Resize
 //-----------------------------------------------------------------------------
-
 void CRenderer::Resize(int lWidth, int lHeight)
 {
 	if (lWidth <= 0 || lHeight <= 0)
@@ -519,4 +532,24 @@ void CRenderer::Resize(int lWidth, int lHeight)
 		return;
 
 	glViewport(0, 0, m_lViewportWidth, m_lViewportHeight);
+}
+
+//-----------------------------------------------------------------------------
+// VSync
+//-----------------------------------------------------------------------------
+void CRenderer::SetVSync(bool bEnabled)
+{
+	m_bVSync = bEnabled;
+
+	if (g_wglSwapIntervalEXT == nullptr)
+	{
+		Utils::ODS("[WARN] WGL_EXT_swap_control is not available.");
+		return;
+	}
+
+	g_wglSwapIntervalEXT(bEnabled ? 1 : 0);
+
+	Utils::ODS(
+		"[INFO] VSync: %s",
+		bEnabled ? "ON" : "OFF");
 }

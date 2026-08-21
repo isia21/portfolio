@@ -1,5 +1,8 @@
 #include "stdafx.h"
+
 #include "../Engine/Renderer.h"
+#include "../Engine/Camera.h"
+
 #include "Application.h"
 
 IMPLEMENT_SINGLETON(CApplication);
@@ -7,6 +10,7 @@ IMPLEMENT_SINGLETON(CApplication);
 CApplication::~CApplication()
 {
 	SAFEDELETE(m_pRenderer);
+	SAFEDELETE(m_pCamera);
 }
 
 bool CApplication::Initialize(HINSTANCE hInstance)
@@ -22,10 +26,19 @@ bool CApplication::Initialize(HINSTANCE hInstance)
 
 	ShowWindow(m_hWnd, SW_SHOW);
 	UpdateWindow(m_hWnd);
-	m_pRenderer = new CRenderer();
 
+	QueryPerformanceFrequency(&m_liPerformanceFrequency);
+	QueryPerformanceCounter(&m_liFrameStart);
+
+	m_pRenderer = new CRenderer();
+	m_pRenderer->SetVSync(false);
 	if (!m_pRenderer->Init(m_hWnd, m_lWidth, m_lHeight, false))
 		return false;
+
+
+	m_pCamera = new CCamera();
+	m_pCamera->SetViewport(m_lWidth, m_lHeight);
+	m_pCamera->SetDrunkMode(true);
 
 	m_bRunning = true;
 
@@ -36,9 +49,14 @@ bool CApplication::Initialize(HINSTANCE hInstance)
 int CApplication::Run()
 {
 	MSG message = {};
+
+	QueryPerformanceCounter(&m_liFrameStart);
+
 	Utils::ODS("[INFO] Entering main loop...");
+
 	while (m_bRunning)
 	{
+		// --- Message pump --- 
 		while (PeekMessage(&message, nullptr, 0, 0, PM_REMOVE))
 		{
 			if (message.message == WM_QUIT)
@@ -54,10 +72,44 @@ int CApplication::Run()
 		if (!m_bRunning)
 			break;
 
+		// --- Frame timing ---	
+		LARGE_INTEGER liCurrent;
+		QueryPerformanceCounter(&liCurrent);
+
+		const double fDeltaTime = static_cast<double>(liCurrent.QuadPart - m_liFrameStart.QuadPart) / static_cast<double>(m_liPerformanceFrequency.QuadPart);
+
+		m_liFrameStart = liCurrent;
+
+		m_fFrameTime = fDeltaTime;
+		m_fFPSTime += fDeltaTime;
+		++m_lFPSFrames;
+
+		if (m_fFPSTime >= 0.25)
+		{
+			m_fFPS = static_cast<double>(m_lFPSFrames) / m_fFPSTime;
+
+			m_lFPSFrames = 0;
+			m_fFPSTime = 0.0;
+		}
+
+		// --- Process frame and render ---
 		Update();
 		Render();
-	}
 
+		// --- FPS limiter ---
+		if (m_bLockFPS && m_lFPSLock > 0)
+		{
+			const LONGLONG llTargetFrameTicks = m_liPerformanceFrequency.QuadPart / m_lFPSLock;
+
+			LARGE_INTEGER liCurrent;
+			do
+			{
+				QueryPerformanceCounter(&liCurrent);
+			}
+			while ((liCurrent.QuadPart - m_liFrameStart.QuadPart) < llTargetFrameTicks);
+		}
+
+	}
 	return static_cast<int>(message.wParam);
 }
 
@@ -110,7 +162,11 @@ void CApplication::Update()
 	// TODO:
 	//
 	// Input processing
-	// Camera update
+	
+	// --- Camera processing ---
+	if (m_pCamera != nullptr)
+		m_pCamera->Update(static_cast<float>(m_fFrameTime));
+
 	// Object transforms
 	// Animation
 	//
@@ -119,7 +175,31 @@ void CApplication::Update()
 
 void CApplication::Render()
 {
+	// --- Clear screen and set camera ---
 	m_pRenderer->Clear();
+	m_pRenderer->SetCamera(m_pCamera);
+
+	// --- Draw UI ---
+	{
+		const int lRectWidth = 160;
+		const int lRectHeight = 22;
+		const int lRectX = (m_lWidth / 2) - (lRectWidth / 2);
+		const int lRectY = 8;
+
+		m_pRenderer->DrawRect(lRectX, lRectY, lRectWidth, lRectHeight, 0x80808080);
+
+		m_pRenderer->DrawTextF(
+			m_lWidth / 2,
+			lRectY + 16,
+			0xFFFFFFFF,
+			14,
+			TEXT_ALIGN_CENTER,
+			"FPS %.2f %.3fms",
+			m_fFPS,
+			m_fFrameTime * 1000.0);
+	}
+
+	// --- Render all scene/frame data -- 
 	m_pRenderer->Render();
 }
 
@@ -135,6 +215,9 @@ void CApplication::Resize(int width, int height)
 
 	if (m_pRenderer != nullptr)
 		m_pRenderer->Resize(m_lWidth, m_lHeight);
+
+	if (m_pCamera != nullptr)
+		m_pCamera->SetViewport(m_lWidth, m_lHeight);
 }
 
 void CApplication::Shutdown()
@@ -211,5 +294,5 @@ LRESULT CApplication::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 		break;
 	}
 
-	return DefWindowProcW(hWnd, message, wParam, lParam);
+	return DefWindowProc(hWnd, message, wParam, lParam);
 }

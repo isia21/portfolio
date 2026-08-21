@@ -1,5 +1,6 @@
 #pragma once
 class C3DObject;
+class CCamera;
 
 //-----------------------------------------------------------------------------
 // Render layer
@@ -47,7 +48,7 @@ struct RenderCommand2D
 			int lX;
 			int lY;
 			unsigned int dwColor;
-			const char* pszText;
+			char szText[256];
 			int lFontSize;
 			ETextAlignment eAlignment;
 		} Text;
@@ -58,6 +59,13 @@ struct RenderCommand2D
 //-----------------------------------------------------------------------------
 class CRenderer
 {
+
+private:
+	struct FontData {
+		GLuint lBase;
+		HFONT hFont;
+	};
+
 public:
 	CRenderer();
 	~CRenderer();
@@ -74,6 +82,8 @@ private:
 	void RenderText(const RenderCommand2D& command);
 
 public:
+	void SetCamera(CCamera* pCamera) { m_pCamera = pCamera; }
+
 	void Clear();
 	void Render();
 
@@ -83,10 +93,14 @@ public:
 	void Draw(C3DObject* pObject);
 	void DrawRect(int lX, int lY, int lWidth, int lHeight, unsigned int dwColor);
 	void DrawText(int lX, int lY, const char* pszText, unsigned int dwColor, int lFontSize = 14, ETextAlignment eAlignment = TEXT_ALIGN_LEFT);
+	void DrawTextF(int lX, int lY, unsigned int dwColor, int lFontSize, ETextAlignment eAlignment, const char* pszFormat, ...);
+
 
 	void SetGridStep(float fStep);
 
 	void Resize(int lWidth, int lHeight);
+	void SetVSync(bool bEnabled);
+
 
 	bool IsInitialized() const { return m_bInitialized; }
 
@@ -113,6 +127,7 @@ private:
 	int m_lWndPosX;
 	int m_lWndPosY;
 
+	bool m_bVSync;
 	bool m_bFullScreen;
 	bool m_bLockFPS;
 
@@ -122,6 +137,9 @@ private:
 
 	float m_fGridStep;
 
+	CCamera* m_pCamera;
+
 	std::vector<C3DObject*> m_vObjects3D;
 	std::vector<RenderCommand2D> m_vLayer2D;
+	std::map<int, FontData> m_FontCache;
 };
