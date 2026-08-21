@@ -29,6 +29,9 @@ x86/
 *.exp
 *.ilk
 
+# --- Ignore log files ---
+[Ll]og/
+
 # --- Debug symbols and Profiler output ---
 *.pdb
 *.iobj
