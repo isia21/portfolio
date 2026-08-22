@@ -1,8 +1,12 @@
 #pragma once
 class CRenderer;
+class C3DObject;
 class CWorld;
 class CUIManager;
 class CUITextBox;
+class CUIButton;
+class CUISmartTree;
+class CUIWindow;
 
 class CApplication
 {
@@ -15,6 +19,15 @@ public:
 		m_pWorld(nullptr),
 		m_pUIManager(nullptr),
 		m_bRunning(false),
+		
+		m_pSelectedObject(nullptr),
+		m_pInspectorWindow(nullptr),
+		m_pTxtInspectorName(nullptr),
+		m_pTxtInspectorStats(nullptr),
+		m_pTxtInspectorTransform(nullptr),
+		m_pBtnToggleWireframe(nullptr),
+		m_pBtnDeleteObject(nullptr),
+
 		m_lWidth(1280), m_lHeight(720),
 		m_bLockFPS(true), m_lFPSLock(1200){};
 
@@ -24,6 +37,10 @@ public:
 	bool Initialize(HINSTANCE hInstance);
 	int Run();
 	HWND GetWindowHandle() const { return m_hWnd; }
+
+	void RebuildSceneTree();
+	void UpdateInspector();
+
 private:
 	bool RegisterWindowClass();
 	bool CreateApplicationWindow();
@@ -43,12 +60,6 @@ private:
 	HINSTANCE m_hInstance;
 	HWND m_hWnd;
 
-	// --- Render ring ---
-	CRenderer* m_pRenderer;
-	CWorld* m_pWorld;
-	CUIManager* m_pUIManager;
-	CUITextBox* m_pFPSTextBox;
-
 	// --- Application states ---
 	bool m_bRunning;
 
@@ -67,4 +78,28 @@ private:
 	double m_fFPS;
 	double m_fFPSTime;
 	int m_lFPSFrames;
+
+
+
+
+
+
+
+	// --- Current selected object ---
+	C3DObject* m_pSelectedObject;
+
+	// --- Render ring ---
+	CRenderer* m_pRenderer;
+	CWorld* m_pWorld;
+	CUIManager* m_pUIManager;
+	CUITextBox* m_pFPSTextBox;
+	CUISmartTree* m_pSceneTree;
+
+	// --- Inspector Window elements ---
+	CUIWindow* m_pInspectorWindow;
+	CUITextBox* m_pTxtInspectorName;
+	CUITextBox* m_pTxtInspectorStats;
+	CUITextBox* m_pTxtInspectorTransform;
+	CUIButton* m_pBtnToggleWireframe;
+	CUIButton* m_pBtnDeleteObject;
 };

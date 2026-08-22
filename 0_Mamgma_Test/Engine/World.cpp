@@ -3,6 +3,7 @@
 
 #include "../Engine/3DObject.h"
 #include "../Engine/Camera.h"
+#include "../Engine/Scene.h"
 
 #include "World.h"
 
@@ -11,7 +12,7 @@
 // World
 //-----------------------------------------------------------------------------
 CWorld::CWorld()
-	: m_pCamera(nullptr)
+	: m_pCamera(nullptr), m_pScene(nullptr)
 {}
 
 CWorld::~CWorld()
@@ -24,131 +25,29 @@ CWorld::~CWorld()
 //-----------------------------------------------------------------------------
 bool CWorld::Init()
 {
+	// --- Initialize camera ---
 	m_pCamera = new CCamera();
-
 	if (m_pCamera == nullptr)
 		return false;
 
+	// --- Initialize scene and objects ---
+	m_pScene = new CScene("Main Scene");
+	if (m_pScene == nullptr)
+		return false;
 
-	//-------------------------------------------------------------------------
-	// Test scene
-	//-------------------------------------------------------------------------
-
-	// --- Ground plane ---
-	{
-		C3DObject* pObject = C3DObject::CreatePrimitive(C3DObject::ePR_Plane, 10.0f);
-
-		if (pObject != nullptr)
-		{
-			pObject->SetPosition(0.0f, -2.0f, 0.0f);
-			pObject->SetVisible(true);
-			pObject->SetModelColor(0x808080FF);
-			m_vObjects.push_back(pObject);
-		}
-	}
-
-	// --- Cube #1 ---
-	{
-		C3DObject* pObject =
-			C3DObject::CreatePrimitive(C3DObject::ePR_Cube, 1.0f);
-
-		if (pObject != nullptr)
-		{
-			pObject->SetPosition(-3.0f, 0.0f, 0.0f);
-			pObject->SetRotation(0.0f, 0.0f, 0.0f);
-			pObject->SetVisible(true);
-			pObject->SetModelColor(0xFF0000FF);
-			m_vObjects.push_back(pObject);
-		}
-	}
-
-	// --- Cube #2 ---
-	{
-		C3DObject* pObject =
-			C3DObject::CreatePrimitive(C3DObject::ePR_Cube, 1.5f);
-
-		if (pObject != nullptr)
-		{
-			pObject->SetPosition(3.0f, 0.0f, 0.0f);
-			pObject->SetRotation(0.0f, 45.0f, 0.0f);
-			pObject->SetVisible(true);
-			pObject->SetModelColor(0x00FF00FF);
-
-			m_vObjects.push_back(pObject);
-		}
-	}
-
-	// --- Sphere #1 ---
-	{
-		C3DObject* pObject =
-			C3DObject::CreatePrimitive(C3DObject::ePR_Sphere, 1.0f);
-
-		if (pObject != nullptr)
-		{
-			pObject->SetPosition(-2.0f, 0.0f, 4.0f);
-			pObject->SetVisible(true);
-			pObject->SetModelColor(0xFFFF00FF);
-
-			m_vObjects.push_back(pObject);
-		}
-	}
-
-	// --- Sphere #2 ---
-	{
-		C3DObject* pObject =
-			C3DObject::CreatePrimitive(C3DObject::ePR_Sphere, 1.5f);
-
-		if (pObject != nullptr)
-		{
-			pObject->SetPosition(2.0f, 1.0f, 4.0f);
-			pObject->SetVisible(true);
-			pObject->SetModelColor(0x0000FFFF);
-			pObject->SetRenderType(C3DObject::ERenderType::eRT_Wireframe);
-
-			m_vObjects.push_back(pObject);
-		}
-	}
-
-	// --- Sine Plane (Complex Mesh for cutting) ---
-	{
-		C3DObject* pObject = C3DObject::CreatePrimitive(C3DObject::ePR_SinePlane, 10.0f);
-
-		if (pObject != nullptr)
-		{
-			pObject->SetPosition(0.0f, 2.0f, -8.0f); 
-			pObject->SetVisible(true);
-			pObject->SetModelColor(0xFF00FFFF);
-			pObject->SetRenderType(C3DObject::ERenderType::eRT_Wireframe);
-
-			m_vObjects.push_back(pObject);
-		}
-	}
-
-	Utils::ODS(
-		"[INFO] World initialized. Objects: %d",
-		static_cast<int>(m_vObjects.size()));
-
-	return true;
-
+	// Create default scene objects
+	m_pScene->CreateDefault(); 
+	
+	Utils::ODS("[INFO] World initialized. Objects: %d", static_cast<int>(GetObjects().size()));
 
 	return true;
 }
 
 void CWorld::Shutdown()
 {
-	for (std::vector<C3DObject*>::iterator it = m_vObjects.begin(); it != m_vObjects.end(); ++it)
-	{
-		delete* it;
-	}
-
-	m_vObjects.clear();
-
+	// --- Destroy owned camera and scene ---
 	SAFEDELETE(m_pCamera);
-	//	if (m_pCamera != nullptr)
-	//	{
-	//		delete m_pCamera;
-	//		m_pCamera = nullptr;
-	//	}
+	SAFEDELETE(m_pScene);
 }
 
 
@@ -160,55 +59,15 @@ void CWorld::Update(float fDeltaTime)
 	if (m_pCamera != nullptr)
 		m_pCamera->Update(fDeltaTime);
 
+	if (m_pScene != nullptr)
+		m_pScene->Update(fDeltaTime);
+
 	// TODO:
 	// Object transforms.
 	// Object animation.
 	// World state.
 	// Simulation.
 }
-
-//-----------------------------------------------------------------------------
-// Objects
-//-----------------------------------------------------------------------------
-void CWorld::AddObject(C3DObject* pObject)
-{
-	if (pObject == nullptr)
-		return;
-
-	m_vObjects.push_back(pObject);
-}
-
-void CWorld::RemoveObject(C3DObject* pObject)
-{
-	if (pObject == nullptr)
-		return;
-
-	for (std::vector<C3DObject*>::iterator it = m_vObjects.begin(); it != m_vObjects.end(); ++it)
-	{
-		if (*it == pObject)
-		{
-			delete* it;
-			m_vObjects.erase(it);
-			return;
-		}
-	}
-}
-
-C3DObject* CWorld::CreateObject(int lType)
-{
-	C3DObject::EObjectType eType = (C3DObject::EObjectType)lType;
-	C3DObject* pObject = new C3DObject();
-
-	if (pObject == nullptr)
-		return nullptr;
-
-	pObject->SetObjectType(eType);
-
-	AddObject(pObject);
-
-	return pObject;
-}
-
 
 //-----------------------------------------------------------------------------
 // Camera
@@ -223,5 +82,6 @@ CCamera* CWorld::GetCamera() const
 //-----------------------------------------------------------------------------
 const std::vector<C3DObject*>& CWorld::GetObjects() const
 {
-	return m_vObjects;
+	static const std::vector<C3DObject*> s_empty;
+	return (m_pScene != nullptr) ? m_pScene->GetObjects() : s_empty;
 }

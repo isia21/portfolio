@@ -4,6 +4,7 @@
 #include "../Engine/3DObject.h"
 #include "../Engine/Camera.h"
 #include "../Engine/World.h"
+#include "../Engine/Scene.h"
 #include "../Engine/UI.h"
 
 #include "Application.h"
@@ -68,98 +69,136 @@ bool CApplication::Initialize(HINSTANCE hInstance)
 
 
 		// --- Create Scene Outliner Window ---
-		CUIWindow* pSceneWindow = new CUIWindow(
-			10, 10,
-			280, 380,
-			"Scene Outliner",
-			0x1E1E1EF2,
-			0x282828FF,
-			0x454545FF,
-			1);
-
-		const int lBtnY = 30;
-		const int lBtnHeight = 22;
-		const int lBtnWidth = 60;
-		const int lBtnPadding = 5;
-		int curBtnX = 6;
-
-		// [New]
-		CUIButton* pBtnNew = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "New", []() {
-			Utils::ODS("[SCENE] New Scene action triggered.");
-			});
-		pSceneWindow->AddChild(pBtnNew);
-		curBtnX += lBtnWidth + lBtnPadding;
-
-		// [Load]
-		CUIButton* pBtnLoad = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "Load", []() {
-			Utils::ODS("[SCENE] Load Scene dialog opened.");
-			});
-		pSceneWindow->AddChild(pBtnLoad);
-		curBtnX += lBtnWidth + lBtnPadding;
-
-		// [Save]
-		CUIButton* pBtnSave = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "Save", []() {
-			Utils::ODS("[SCENE] Save Scene action triggered.");
-			});
-		pSceneWindow->AddChild(pBtnSave);
-		curBtnX += lBtnWidth + lBtnPadding;
-
-		// [Export]
-		CUIButton* pBtnExport = new CUIButton(curBtnX, lBtnY, 68, lBtnHeight, "Export", []() {
-			Utils::ODS("[SCENE] Exporting sliced meshes to OBJ...");
-			});
-		pSceneWindow->AddChild(pBtnExport);
-
-		// Smart Tree (Scene Outliner)
-		const int lTreeY = 58;
-		const int lTreeWidth = 268;
-		const int lTreeHeight = 314;
-
-		CUISmartTree* pSceneTree = new CUISmartTree(6, lTreeY, lTreeWidth, lTreeHeight, 20, 12);
-
-		const std::vector<C3DObject*>& vWorldObjects = m_pWorld->GetObjects();
-
-		// --- Fill test hierarchy for demonstration of slicing functionality ---
-		if (!vWorldObjects.empty())
 		{
-			if (vWorldObjects.size() > 0)
-				pSceneTree->AddRoot("Ground Plane", vWorldObjects[0]);
+			CUIWindow* pSceneWindow = new CUIWindow(
+				10, 10,
+				280, 380,
+				"Scene Outliner",
+				0x1E1E1EF2,
+				0x282828FF,
+				0x454545FF,
+				1);
 
-			if (vWorldObjects.size() > 1)
-				pSceneTree->AddRoot("Red Cube", vWorldObjects[1]);
+			const int lBtnY = 30;
+			const int lBtnHeight = 22;
+			const int lBtnWidth = 60;
+			const int lBtnPadding = 5;
+			int curBtnX = 6;
 
-			SUITreeNode* pSineRoot = pSceneTree->AddRoot("Sine Mesh (Source)", (vWorldObjects.size() > 2 ? vWorldObjects[2] : nullptr));
-			{
-				pSceneTree->AddChild(pSineRoot, "SubMesh Upper A", nullptr);
-				pSceneTree->AddChild(pSineRoot, "SubMesh Upper B", nullptr);
-				pSceneTree->AddChild(pSineRoot, "SubMesh Lower", nullptr);
-				pSceneTree->AddChild(pSineRoot, "Cut Surface Cap", nullptr);
-			}
+			// [New]
+			CUIButton* pBtnNew = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "New", []() {
+				Utils::ODS("[SCENE] New Scene action triggered.");
+				});
+			pSceneWindow->AddChild(pBtnNew);
+			curBtnX += lBtnWidth + lBtnPadding;
 
-			pSceneTree->AddRoot("Slicing Plane (Tool)", nullptr);
+			// [Load]
+			CUIButton* pBtnLoad = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "Load", []() {
+				Utils::ODS("[SCENE] Load Scene dialog opened.");
+				});
+			pSceneWindow->AddChild(pBtnLoad);
+			curBtnX += lBtnWidth + lBtnPadding;
+
+			// [Save]
+			CUIButton* pBtnSave = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "Save", []() {
+				Utils::ODS("[SCENE] Save Scene action triggered.");
+				});
+			pSceneWindow->AddChild(pBtnSave);
+			curBtnX += lBtnWidth + lBtnPadding;
+
+			// [Export]
+			CUIButton* pBtnExport = new CUIButton(curBtnX, lBtnY, 68, lBtnHeight, "Export", []() {
+				Utils::ODS("[SCENE] Exporting sliced meshes to OBJ...");
+				});
+			pSceneWindow->AddChild(pBtnExport);
+
+			// Smart Tree (Scene Outliner)
+			const int lTreeY = 58;
+			const int lTreeWidth = 268;
+			const int lTreeHeight = 314;
+
+			m_pSceneTree = new CUISmartTree(6, lTreeY, lTreeWidth, lTreeHeight, 20, 12);
+
+			const std::vector<C3DObject*>& vWorldObjects = m_pWorld->GetObjects();
+
+			// Switch 3D Object visibility when toggling the checkbox in the tree
+			m_pSceneTree->SetOnToggleVisibility([](SUITreeNode* pNode, bool bVisible) {
+				if (pNode != nullptr && pNode->pUserData != nullptr)
+				{
+					C3DObject* pObj = static_cast<C3DObject*>(pNode->pUserData);
+					pObj->SetVisible(bVisible);
+					Utils::ODS("[SCENE_UI] Visibility of '%s' -> %s", pNode->sText.c_str(), bVisible ? "SHOWN" : "HIDDEN");
+				}
+				});
+
+			// Log selection of a node in the tree
+			m_pSceneTree->SetOnSelect([this](SUITreeNode* pNode) {
+				if (pNode != nullptr && pNode->pUserData != nullptr)
+					m_pSelectedObject = static_cast<C3DObject*>(pNode->pUserData);
+				else
+					m_pSelectedObject = nullptr;
+
+				UpdateInspector();
+				});
+
+			pSceneWindow->AddChild(m_pSceneTree);
+
+			m_pUIManager->AddElement(pSceneWindow);
 		}
 
-		// Switch 3D Object visibility when toggling the checkbox in the tree
-		pSceneTree->SetOnToggleVisibility([](SUITreeNode* pNode, bool bVisible) {
-			if (pNode != nullptr && pNode->pUserData != nullptr)
-			{
-				C3DObject* pObj = static_cast<C3DObject*>(pNode->pUserData);
-				pObj->SetVisible(bVisible);
-				Utils::ODS("[SCENE_UI] Visibility of '%s' -> %s", pNode->sText.c_str(), bVisible ? "SHOWN" : "HIDDEN");
-			}
-			});
+		// --- Inspector Window ---
+		{
+			const int lInspWidth = 250;
+			const int lInspHeight = 230;
+			const int lInspX = m_lWidth - lInspWidth - 10;
 
-		// Log selection of a node in the tree
-		pSceneTree->SetOnSelect([](SUITreeNode* pNode) {
-			if (pNode != nullptr)
-			{
-				Utils::ODS("[SCENE_UI] Selected scene entity: '%s' (Ptr: %p)", pNode->sText.c_str(), pNode->pUserData);
-			}
-			});
+			m_pInspectorWindow = new CUIWindow(
+				lInspX, 10,
+				lInspWidth, lInspHeight,
+				"Object Inspector",
+				0x1E1E1EF2, 0x282828FF, 0x454545FF, 1);
 
-		pSceneWindow->AddChild(pSceneTree);
+			m_pTxtInspectorName = new CUITextBox(6, 30, 238, 22, "No Selection", 0x141414AA, 0x00FF88FF, 12, TEXT_ALIGN_LEFT);
+			m_pInspectorWindow->AddChild(m_pTxtInspectorName);
 
-		m_pUIManager->AddElement(pSceneWindow);
+			m_pTxtInspectorStats = new CUITextBox(6, 56, 238, 22, "Verts: 0 | Tris: 0", 0x141414AA, 0xAAAAAAFF, 12, TEXT_ALIGN_LEFT);
+			m_pInspectorWindow->AddChild(m_pTxtInspectorStats);
+
+			m_pTxtInspectorTransform = new CUITextBox(6, 82, 238, 40, "Pos: (0.0, 0.0, 0.0)", 0x141414AA, 0xCCCCCCFF, 11, TEXT_ALIGN_LEFT);
+			m_pInspectorWindow->AddChild(m_pTxtInspectorTransform);
+
+			m_pBtnToggleWireframe = new CUIButton(6, 130, 238, 26, "Toggle Wireframe", [this]() {
+				if (m_pSelectedObject != nullptr)
+				{
+
+					m_pSelectedObject->SetRenderType(
+						(m_pSelectedObject->GetRenderType()  == C3DObject::eRT_Wireframe)
+						? C3DObject::eRT_Poligon
+						: C3DObject::eRT_Wireframe
+						);
+
+					UpdateInspector();
+				}
+				});
+			m_pInspectorWindow->AddChild(m_pBtnToggleWireframe);
+
+
+			m_pBtnDeleteObject = new CUIButton(6, 162, 238, 26, "Delete Entity", [this]() {
+				if (m_pSelectedObject != nullptr && m_pWorld != nullptr && m_pWorld->GetScene() != nullptr)
+				{
+					m_pWorld->GetScene()->RemoveObject(m_pSelectedObject);
+					m_pSelectedObject = nullptr;
+					RebuildSceneTree();
+					UpdateInspector();
+				}
+				});
+			m_pBtnDeleteObject->SetHoverColor(0x8B0000FF);
+			m_pInspectorWindow->AddChild(m_pBtnDeleteObject);
+
+			m_pUIManager->AddElement(m_pInspectorWindow);
+
+			UpdateInspector();
+		}
 	}
 	m_bRunning = true;
 
@@ -287,15 +326,94 @@ bool CApplication::CreateApplicationWindow()
 	return true;
 }
 
+void CApplication::UpdateInspector()
+{
+	if (m_pInspectorWindow == nullptr)
+		return;
+
+	// Если объект не выбран:
+	if (m_pSelectedObject == nullptr)
+	{
+		m_pTxtInspectorName->SetText("No Selection");
+		m_pTxtInspectorStats->SetText("Verts: 0 | Tris: 0");
+		m_pTxtInspectorTransform->SetText("Pos: (0.0, 0.0, 0.0)\nRot: (0.0, 0.0, 0.0)");
+
+		m_pBtnToggleWireframe->SetEnabled(false);
+		m_pBtnDeleteObject->SetEnabled(false);
+		return;
+	}
+
+	// Если объект выбран — разблокируем кнопки и выводим данные:
+	m_pBtnToggleWireframe->SetEnabled(true);
+	m_pBtnDeleteObject->SetEnabled(true);
+
+	// 1. Имя объекта
+	m_pTxtInspectorName->SetText(m_pSelectedObject->GetName());
+
+	// 2. Статистика геометрии
+	char szStats[64] = {};
+	sprintf_s(szStats, sizeof(szStats), "Verts: %zu | Tris: %zu",
+		m_pSelectedObject->GetVertexCount(),
+		m_pSelectedObject->GetTriangleCount());
+	m_pTxtInspectorStats->SetText(szStats);
+
+	// 3. Координаты
+	char szTransform[128] = {};
+	sprintf_s(szTransform, sizeof(szTransform), "Pos: (%.1f, %.1f, %.1f) | %s",
+		m_pSelectedObject->GetPosition().x,
+		m_pSelectedObject->GetPosition().y,
+		m_pSelectedObject->GetPosition().z,
+		(m_pSelectedObject->GetRenderType() == C3DObject::eRT_Wireframe ? "Wireframe" : "Solid"));
+	m_pTxtInspectorTransform->SetText(szTransform);
+}
+
+void CApplication::RebuildSceneTree()
+{
+	if (m_pSceneTree == nullptr || m_pWorld == nullptr || m_pWorld->GetScene() == nullptr)
+		return;
+
+	m_pSceneTree->Clear();
+
+	CScene* pScene = m_pWorld->GetScene();
+	const std::vector<C3DObject*>& vObjects = pScene->GetObjects();
+
+	// --- Add each 3D object in the scene to the scene tree ---
+	for (C3DObject* pObj : vObjects)
+	{
+		if (pObj == nullptr)
+			continue;
+
+		const char* pszName = strlen(pObj->GetName()) > 0 ? pObj->GetName() : "Unnamed Entity";
+
+		// --- Create a tree node and associate the 3D object with it ---
+		SUITreeNode* pNode = m_pSceneTree->AddRoot(pszName, pObj);
+
+		// --- Sync visibility status between the scene tree node and the actual 3D object ---
+		pNode->bObjectVisible = pObj->IsVisible();
+	}
+
+	Utils::ODS("[UI] Scene tree rebuilt. Nodes: %d", static_cast<int>(vObjects.size()));
+}
+
 void CApplication::Update()
 {
 	// TODO:
 	//
 	// Input processing
-	
+
 	// --- World update ---
 	if (m_pWorld != nullptr)
+	{
 		m_pWorld->Update(static_cast<float>(m_fFrameTime));
+
+		// --- Check for scene structure changes and rebuild the scene tree if necessary ---
+		CScene* pScene = m_pWorld->GetScene();
+		if (pScene != nullptr && pScene->HasStructureChanged())
+		{
+			RebuildSceneTree();
+			pScene->ResetStructureChanged();
+		}
+	}
 
 	// Object transforms
 	// Animation
@@ -352,6 +470,12 @@ void CApplication::Resize(int width, int height)
 	{
 		const int lFpsX = (m_lWidth / 2) - (m_pFPSTextBox->GetWidth() / 2);
 		m_pFPSTextBox->SetPosition(lFpsX, 8);
+	}
+
+	if (m_pInspectorWindow != nullptr)
+	{
+		const int lInspX = m_lWidth - m_pInspectorWindow->GetWidth() - 10;
+		m_pInspectorWindow->SetPosition(lInspX, 10);
 	}
 }
 
