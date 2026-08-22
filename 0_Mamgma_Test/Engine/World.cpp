@@ -109,6 +109,21 @@ bool CWorld::Init()
 		}
 	}
 
+	// --- Sine Plane (Complex Mesh for cutting) ---
+	{
+		C3DObject* pObject = C3DObject::CreatePrimitive(C3DObject::ePR_SinePlane, 10.0f);
+
+		if (pObject != nullptr)
+		{
+			pObject->SetPosition(0.0f, 2.0f, -8.0f); 
+			pObject->SetVisible(true);
+			pObject->SetModelColor(0xFF00FFFF);
+			pObject->SetRenderType(C3DObject::ERenderType::eRT_Wireframe);
+
+			m_vObjects.push_back(pObject);
+		}
+	}
+
 	Utils::ODS(
 		"[INFO] World initialized. Objects: %d",
 		static_cast<int>(m_vObjects.size()));

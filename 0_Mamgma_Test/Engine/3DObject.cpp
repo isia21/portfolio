@@ -29,22 +29,25 @@ C3DObject::~C3DObject()
 //-----------------------------------------------------------------------------
 // Primitive factory
 //-----------------------------------------------------------------------------
-C3DObject* C3DObject::CreatePrimitive(EPrimitiveType eType, float fScale)
+C3DObject* C3DObject::CreatePrimitive(EPrimitiveType eType, float fFactor)
 {
-	if (fScale <= 0.0f)
+	if (fFactor <= 0.0f)
 		return nullptr;
 
 
 	switch (eType)
 	{
 	case ePR_Cube:
-		return CreateCube(fScale);
+		return CreateCube(fFactor);
 
 	case ePR_Plane:
-		return CreatePlane(fScale);
+		return CreatePlane(fFactor);
 
 	case ePR_Sphere:
-		return CreateSphere(fScale);
+		return CreateSphere(fFactor);
+
+	case ePR_SinePlane:
+		return CreateSinePlane(fFactor);
 
 	default:
 		break;
@@ -242,7 +245,84 @@ C3DObject* C3DObject::CreateSphere(float fRadius)
 	return pObject;
 }
 
+//-----------------------------------------------------------------------------
+// Create sine plane
+//
+// fSize defines the width and length of the plane.
+//
+// Generates a wavy plane using sine and cosine functions.
+// Highly non-convex, perfect for testing complex mesh slicing.
+//-----------------------------------------------------------------------------
+C3DObject* C3DObject::CreateSinePlane(float fSize)
+{
+	C3DObject* pObject = new C3DObject();
 
+	if (pObject == nullptr)
+		return nullptr;
+
+	pObject->m_eObjectType = eOT_SourceModel;
+
+	const int lSegments = 64; // Grid resolution (64x64 faces)
+	const unsigned int dwColor = 0xFFFFFFFF;
+
+	const float fHalfSize = fSize / 2.0f;
+	const float fStep = fSize / static_cast<float>(lSegments);
+
+	// Wave parameters (tweak these to change the shape)
+	const float fFrequency = 1.5f;
+	const float fAmplitude = fSize * 0.15f;
+
+	// --- Generate vertices ---
+	for (int z = 0; z <= lSegments; ++z)
+	{
+		const float fPosZ = -fHalfSize + (static_cast<float>(z) * fStep);
+		const float fCosZ = cosf(fPosZ * fFrequency);
+
+		for (int x = 0; x <= lSegments; ++x)
+		{
+			const float fPosX = -fHalfSize + (static_cast<float>(x) * fStep);
+			const float fSinX = sinf(fPosX * fFrequency);
+
+			// Math: Y = sin(X) * cos(Z) * Amplitude
+			const float fPosY = fSinX * fCosZ * fAmplitude;
+
+			Vertex3D vertex = {};
+
+			vertex.x = fPosX;
+			vertex.y = fPosY;
+			vertex.z = fPosZ;
+			vertex.dwColor = dwColor;
+
+			pObject->m_vVertices.push_back(vertex);
+		}
+	}
+
+	// --- Generate indices ---
+	const int lStride = lSegments + 1;
+
+	for (int z = 0; z < lSegments; ++z)
+	{
+		for (int x = 0; x < lSegments; ++x)
+		{
+			const unsigned int dwCurrent = static_cast<unsigned int>(z * lStride + x);
+			const unsigned int dwNext = dwCurrent + 1;
+			const unsigned int dwBelow = static_cast<unsigned int>((z + 1) * lStride + x);
+			const unsigned int dwBelowNext = dwBelow + 1;
+
+			// Triangle 1
+			pObject->m_vIndices.push_back(dwCurrent);
+			pObject->m_vIndices.push_back(dwBelow);
+			pObject->m_vIndices.push_back(dwNext);
+
+			// Triangle 2
+			pObject->m_vIndices.push_back(dwNext);
+			pObject->m_vIndices.push_back(dwBelow);
+			pObject->m_vIndices.push_back(dwBelowNext);
+		}
+	}
+
+	return pObject;
+}
 //-----------------------------------------------------------------------------
 // Transform
 //-----------------------------------------------------------------------------

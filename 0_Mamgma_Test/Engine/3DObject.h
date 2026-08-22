@@ -37,7 +37,9 @@ public:
 	{
 		ePR_Cube = 0,
 		ePR_Plane,
-		ePR_Sphere
+		ePR_Sphere,
+
+		ePR_SinePlane
 	};
 
 
@@ -52,7 +54,7 @@ public:
 	void SetRenderType(ERenderType eType) { m_eRenderType = eType; }
 
 	// --- Primitive factory ---
-	static C3DObject* CreatePrimitive(EPrimitiveType eType, float fScale);
+	static C3DObject* CreatePrimitive(EPrimitiveType eType, float fFactor);
 
 
 	// --- Object type ---
@@ -104,7 +106,7 @@ private:
 	static C3DObject* CreateCube(float fHalfSize);
 	static C3DObject* CreatePlane(float fHalfSize);
 	static C3DObject* CreateSphere(float fRadius);
-
+	static C3DObject* CreateSinePlane(float fSize);
 
 private:
 	// --- Object stats ---

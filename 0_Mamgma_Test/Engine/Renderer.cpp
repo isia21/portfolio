@@ -397,10 +397,16 @@ void CRenderer::Render2D()
 	glPushMatrix();
 	glLoadIdentity();
 
+	// --- Disable depth test and lighting for 2D rendering ---
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
 
+	// --- Enable blending for transparency ---
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// --- Render 2D queue ---
 	for (std::vector<RenderCommand2D>::const_iterator it = m_vLayer2D.begin();
 		it != m_vLayer2D.end();
 		++it)
@@ -422,6 +428,8 @@ void CRenderer::Render2D()
 		}
 	}
 
+	// --- Restore OpenGL state ---
+	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 
 	glMatrixMode(GL_MODELVIEW);
