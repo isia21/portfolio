@@ -42,11 +42,11 @@ public:
 
 	bool IsPointInside(int lX, int lY) const;
 
-
-	// --- НОВОЕ: Вычисление абсолютных координат экрана с учетом родителей ---
+	// --- Parent-Child Relationship ---
 	void SetParent(CUIElement* pParent) { m_pParent = pParent; }
 	CUIElement* GetParent() const { return m_pParent; }
 
+	// --- Absolute Positioning (relative to parent hierarchy) ---
 	int GetAbsoluteX() const { return m_lX + (m_pParent != nullptr ? m_pParent->GetAbsoluteX() : 0); }
 	int GetAbsoluteY() const { return m_lY + (m_pParent != nullptr ? m_pParent->GetAbsoluteY() : 0); }
 
