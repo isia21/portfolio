@@ -3,6 +3,7 @@
 #include "../Engine/Renderer.h"
 #include "../Engine/Camera.h"
 #include "../Engine/World.h"
+#include "../Engine/UI.h"
 
 #include "Application.h"
 
@@ -44,7 +45,80 @@ bool CApplication::Initialize(HINSTANCE hInstance)
 	m_pWorld->GetCamera()->SetViewport(m_lWidth, m_lHeight);
 	m_pWorld->GetCamera()->SetDrunkMode(true);
 
+	// --- Init UI ---
+	m_pUIManager = new CUIManager();
+	{
+		// --- Create FPS TextBox ---
+		const int lFpsWidth = 160;
+		const int lFpsHeight = 22;
+		const int lFpsX = (m_lWidth / 2) - (lFpsWidth / 2);
+		const int lFpsY = 8;
 
+		m_pFPSTextBox = new CUITextBox(
+			lFpsX, lFpsY,
+			lFpsWidth, lFpsHeight,
+			"FPS --.-- --.---ms",
+			0x80808080,
+			0xFFFFFFFF,
+			14,
+			TEXT_ALIGN_CENTER);
+
+		m_pUIManager->AddElement(m_pFPSTextBox);
+
+
+		// --- Create Buttons panel ---
+		const int lBtnWidth = 80;
+		const int lBtnHeight = 24;
+		const int lBtnPadding = 6;
+		int lCurrentX = 10;
+		const int lBtnY = 8;
+
+		// Load button
+		CUIButton* pBtnLoad = new CUIButton(
+			lCurrentX, lBtnY,
+			lBtnWidth, lBtnHeight,
+			"Load",
+			[]() {
+				Utils::ODS("[UI_CALLBACK] Button 'Load' was clicked!");
+			});
+
+		pBtnLoad->SetNormalColor(0x353535CC);
+		pBtnLoad->SetHoverColor(0x505050FF);
+		pBtnLoad->SetPressedColor(0x2060A0FF);
+		m_pUIManager->AddElement(pBtnLoad);
+
+		lCurrentX += lBtnWidth + lBtnPadding;
+
+		// Save button
+		CUIButton* pBtnSave = new CUIButton(
+			lCurrentX, lBtnY,
+			lBtnWidth, lBtnHeight,
+			"Save",
+			[]() {
+				Utils::ODS("[UI_CALLBACK] Button 'Save' was clicked!");
+			});
+
+		pBtnSave->SetNormalColor(0x353535CC);
+		pBtnSave->SetHoverColor(0x505050FF);
+		pBtnSave->SetPressedColor(0x2060A0FF);
+		m_pUIManager->AddElement(pBtnSave);
+
+		lCurrentX += lBtnWidth + lBtnPadding;
+
+		// Export button
+		CUIButton* pBtnExport = new CUIButton(
+			lCurrentX, lBtnY,
+			lBtnWidth, lBtnHeight,
+			"Export",
+			[]() {
+				Utils::ODS("[UI_CALLBACK] Button 'Export' was clicked!");
+			});
+
+		pBtnExport->SetNormalColor(0x353535CC);
+		pBtnExport->SetHoverColor(0x505050FF);
+		pBtnExport->SetPressedColor(0x2060A0FF);
+		m_pUIManager->AddElement(pBtnExport);
+	}
 	m_bRunning = true;
 
 	Utils::ODS("[INFO] Application initialized successfully.");
@@ -95,6 +169,15 @@ int CApplication::Run()
 
 			m_lFPSFrames = 0;
 			m_fFPSTime = 0.0;
+
+			// --- ОБНОВЛЕНИЕ ТЕКСТА FPS ---
+			if (m_pFPSTextBox != nullptr)
+			{
+				char szFpsBuffer[64] = {};
+				sprintf_s(szFpsBuffer, sizeof(szFpsBuffer), "FPS %.2f %.3fms", m_fFPS, m_fFrameTime * 1000.0);
+				m_pFPSTextBox->SetText(szFpsBuffer);
+			}
+
 		}
 
 		// --- Process frame and render ---
@@ -191,27 +274,10 @@ void CApplication::Render()
 	for (C3DObject* pObject : m_pWorld->GetObjects())
 		m_pRenderer->Draw(pObject);
 
-	// m_pRenderer->Render();
-
-	// --- Draw UI ---
-	{
-		const int lRectWidth = 160;
-		const int lRectHeight = 22;
-		const int lRectX = (m_lWidth / 2) - (lRectWidth / 2);
-		const int lRectY = 8;
-
-		m_pRenderer->DrawRect(lRectX, lRectY, lRectWidth, lRectHeight, 0x80808080);
-
-		m_pRenderer->DrawTextF(
-			m_lWidth / 2,
-			lRectY + 16,
-			0xFFFFFFFF,
-			14,
-			TEXT_ALIGN_CENTER,
-			"FPS %.2f %.3fms",
-			m_fFPS,
-			m_fFrameTime * 1000.0);
-	}
+	
+	// --- Render UI Canvas ---
+	if (m_pUIManager != nullptr)
+		m_pUIManager->Render(m_pRenderer);
 
 
 	// --- Render all scene/frame data -- 
@@ -238,6 +304,13 @@ void CApplication::Resize(int width, int height)
 
 	if (m_pWorld != nullptr && m_pWorld->GetCamera() != nullptr)
 		m_pWorld->GetCamera()->SetViewport(m_lWidth, m_lHeight);
+
+	// --- Fix FPS box position after window resize ---
+	if (m_pFPSTextBox != nullptr)
+	{
+		const int lFpsX = (m_lWidth / 2) - (m_pFPSTextBox->GetWidth() / 2);
+		m_pFPSTextBox->SetPosition(lFpsX, 8);
+	}
 }
 
 void CApplication::Shutdown()
@@ -245,6 +318,9 @@ void CApplication::Shutdown()
 	m_bRunning = false;
 
 	Utils::ODS("[INFO] Shutting down application...");
+
+	SAFEDELETE(m_pUIManager);
+	SAFEDELETE(m_pFPSTextBox);//	 = nullptr;
 
 	if (m_pRenderer != nullptr)
 		m_pRenderer->Shutdown();
@@ -310,6 +386,34 @@ LRESULT CApplication::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 		if (wParam == VK_ESCAPE)
 			DestroyWindow(hWnd);
 
+		return 0;
+	}
+
+	// --- Mouse Event Processing ---
+	case WM_MOUSEMOVE:
+	{
+		const int mouseX = LOWORD(lParam);
+		const int mouseY = HIWORD(lParam);
+		if (m_pUIManager != nullptr)
+			m_pUIManager->ProcessMouseMove(mouseX, mouseY);
+		return 0;
+	}
+
+	case WM_LBUTTONDOWN:
+	{
+		const int mouseX = LOWORD(lParam);
+		const int mouseY = HIWORD(lParam);
+		if (m_pUIManager != nullptr)
+			m_pUIManager->ProcessMouseDown(mouseX, mouseY, 0);
+		return 0;
+	}
+
+	case WM_LBUTTONUP:
+	{
+		const int mouseX = LOWORD(lParam);
+		const int mouseY = HIWORD(lParam);
+		if (m_pUIManager != nullptr)
+			m_pUIManager->ProcessMouseUp(mouseX, mouseY, 0);
 		return 0;
 	}
 

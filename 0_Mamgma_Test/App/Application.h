@@ -1,6 +1,8 @@
 #pragma once
 class CRenderer;
 class CWorld;
+class CUIManager;
+class CUITextBox;
 
 class CApplication
 {
@@ -11,6 +13,7 @@ public:
 		: m_hInstance(nullptr), m_hWnd(nullptr),
 		m_pRenderer(nullptr),
 		m_pWorld(nullptr),
+		m_pUIManager(nullptr),
 		m_bRunning(false),
 		m_lWidth(1280), m_lHeight(720),
 		m_bLockFPS(true), m_lFPSLock(1200){};
@@ -43,6 +46,8 @@ private:
 	// --- Render ring ---
 	CRenderer* m_pRenderer;
 	CWorld* m_pWorld;
+	CUIManager* m_pUIManager;
+	CUITextBox* m_pFPSTextBox;
 
 	// --- Application states ---
 	bool m_bRunning;

@@ -12,6 +12,7 @@
 #include <direct.h>
 #include <time.h>
 
+#include <functional>
 #include <algorithm>
 #include <string>
 #include <vector>

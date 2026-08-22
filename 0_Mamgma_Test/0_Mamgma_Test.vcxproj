@@ -151,6 +151,7 @@
     <ClCompile Include="Engine\3DObject.cpp" />
     <ClCompile Include="Engine\Camera.cpp" />
     <ClCompile Include="Engine\Renderer.cpp" />
+    <ClCompile Include="Engine\UI.cpp" />
     <ClCompile Include="Engine\World.cpp" />
     <ClCompile Include="Math\Vector3.cpp" />
     <ClCompile Include="stdafx.cpp" />
@@ -162,6 +163,7 @@
     <ClInclude Include="Engine\3DObject.h" />
     <ClInclude Include="Engine\Camera.h" />
     <ClInclude Include="Engine\Renderer.h" />
+    <ClInclude Include="Engine\UI.h" />
     <ClInclude Include="Engine\World.h" />
     <ClInclude Include="Math\Vector3.h" />
     <ClInclude Include="stdafx.h" />
