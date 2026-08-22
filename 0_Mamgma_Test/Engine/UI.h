@@ -42,18 +42,28 @@ public:
 
 	bool IsPointInside(int lX, int lY) const;
 
+
+	// --- НОВОЕ: Вычисление абсолютных координат экрана с учетом родителей ---
+	void SetParent(CUIElement* pParent) { m_pParent = pParent; }
+	CUIElement* GetParent() const { return m_pParent; }
+
+	int GetAbsoluteX() const { return m_lX + (m_pParent != nullptr ? m_pParent->GetAbsoluteX() : 0); }
+	int GetAbsoluteY() const { return m_lY + (m_pParent != nullptr ? m_pParent->GetAbsoluteY() : 0); }
+
+
 protected:
 	int m_lX;
 	int m_lY;
 	int m_lWidth;
 	int m_lHeight;
 
+	CUIElement* m_pParent;
+
 	bool m_bVisible;
 	bool m_bEnabled;
 	bool m_bHovered;
 	bool m_bPressed;
 };
-
 
 //-----------------------------------------------------------------------------
 // TextBox Element (Background Rect + Text Label)
@@ -112,7 +122,7 @@ public:
 		int lX = 0, int lY = 0,
 		int lWidth = 120, int lHeight = 35,
 		const char* pszText = "Button",
-		UIEventCallback pfnCallback = nullptr);
+		const UICallbackFn& fnCallback = nullptr);
 
 	virtual ~CUIButton() override = default;
 
@@ -139,6 +149,179 @@ protected:
 	UICallbackFn m_fnOnClick;
 };
 
+//-----------------------------------------------------------------------------
+// Tree Node Definition
+//-----------------------------------------------------------------------------
+struct SUITreeNode
+{
+	std::string sText;
+	void* pUserData;
+
+	bool bExpanded;
+	bool bObjectVisible;
+	bool bSelected;
+
+	SUITreeNode* pParent;
+	std::vector<SUITreeNode*> vChildren;
+
+	SUITreeNode(const char* pszText = "", void* pData = nullptr, SUITreeNode* pParentNode = nullptr)
+		: sText(pszText != nullptr ? pszText : "")
+		, pUserData(pData)
+		, bExpanded(true)
+		, bObjectVisible(true)
+		, bSelected(false)
+		, pParent(pParentNode)
+	{}
+
+	~SUITreeNode()
+	{
+		for (SUITreeNode* pChild : vChildren)
+			delete pChild;
+		vChildren.clear();
+	}
+
+	SUITreeNode* AddChild(const char* pszChildText, void* pChildData = nullptr)
+	{
+		SUITreeNode* pNewChild = new SUITreeNode(pszChildText, pChildData, this);
+		vChildren.push_back(pNewChild);
+		return pNewChild;
+	}
+};
+
+
+// --- Callbacks for SmartTree ---
+typedef std::function<void(SUITreeNode* pNode)> UITreeSelectCallback;
+typedef std::function<void(SUITreeNode* pNode, bool bVisible)> UITreeVisibilityCallback;
+
+//-----------------------------------------------------------------------------
+// CUISmartTree (Hierarchical Scene Outliner Element)
+//-----------------------------------------------------------------------------
+class CUISmartTree : public CUIElement
+{
+public:
+	CUISmartTree(
+		int lX = 0, int lY = 0,
+		int lWidth = 200, int lHeight = 200,
+		int lItemHeight = 20,
+		int lFontSize = 12);
+
+	virtual ~CUISmartTree() override;
+
+public:
+	virtual void Render(CRenderer* pRenderer) override;
+
+	virtual bool OnMouseMove(int lMouseX, int lMouseY) override;
+	virtual bool OnMouseDown(int lMouseX, int lMouseY, int lButton) override;
+	virtual bool OnMouseUp(int lMouseX, int lMouseY, int lButton) override;
+
+public:
+	SUITreeNode* AddRoot(const char* pszText, void* pUserData = nullptr);
+	SUITreeNode* AddChild(SUITreeNode* pParent, const char* pszText, void* pUserData = nullptr);
+	void Clear();
+
+	void SetOnSelect(const UITreeSelectCallback& fn) { m_fnOnSelect = fn; }
+	void SetOnToggleVisibility(const UITreeVisibilityCallback& fn) { m_fnOnToggleVisibility = fn; }
+
+	SUITreeNode* GetSelectedNode() const { return m_pSelectedNode; }
+	void SetSelectedNode(SUITreeNode* pNode);
+
+	void SetBgColor(unsigned int dwColor) { m_dwBgColor = dwColor; }
+	void SetSelectedColor(unsigned int dwColor) { m_dwSelectedBgColor = dwColor; }
+	void SetHoverColor(unsigned int dwColor) { m_dwHoverBgColor = dwColor; }
+
+private:
+	// --- Service structure for flattening visible tree nodes for rendering and mouse hit-testing ---
+	struct SFlatItem
+	{
+		SUITreeNode* pNode;
+		int lLevel;
+		int lItemY;
+	};
+
+	void FlattenVisibleNodes(SUITreeNode* pNode, int lLevel, int& lCurrentY, std::vector<SFlatItem>& vOutList) const;
+
+private:
+	std::vector<SUITreeNode*> m_vRoots;
+	SUITreeNode* m_pSelectedNode;
+	SUITreeNode* m_pHoveredNode;
+
+	int m_lItemHeight;
+	int m_lIndentSize;
+	int m_lFontSize;
+
+	unsigned int m_dwBgColor;
+	unsigned int m_dwSelectedBgColor;
+	unsigned int m_dwHoverBgColor;
+	unsigned int m_dwTextColor;
+
+	UITreeSelectCallback m_fnOnSelect;
+	UITreeVisibilityCallback m_fnOnToggleVisibility;
+};
+
+//-----------------------------------------------------------------------------
+// UI Window / Panel (Container with Title Bar, Drag&Drop, Collapse & Children)
+//-----------------------------------------------------------------------------
+class CUIWindow : public CUIElement
+{
+public:
+	CUIWindow(
+		int lX = 0, int lY = 0,
+		int lWidth = 200, int lHeight = 200,
+		const char* pszTitle = "Window",
+		unsigned int dwBgColor = 0x1E1E1EE6,
+		unsigned int dwHeaderColor = 0x2C2C2CFF,
+		unsigned int dwBorderColor = 0x484848FF,
+		int lBorderSize = 1);
+
+	virtual ~CUIWindow() override;
+
+public:
+	virtual void Render(CRenderer* pRenderer) override;
+
+	virtual bool OnMouseMove(int lMouseX, int lMouseY) override;
+	virtual bool OnMouseDown(int lMouseX, int lMouseY, int lButton) override;
+	virtual bool OnMouseUp(int lMouseX, int lMouseY, int lButton) override;
+
+public:
+	void AddChild(CUIElement* pChild);
+	void RemoveChild(CUIElement* pChild);
+	void ClearChildren();
+
+	void SetTitle(const char* pszTitle);
+	const char* GetTitle() const { return m_szTitle.c_str(); }
+
+	void SetCollapsed(bool bCollapsed);
+	bool IsCollapsed() const { return m_bCollapsed; }
+
+	int GetHeaderHeight() const { return m_lHeaderHeight; }
+	void SetHeaderHeight(int lHeight) { m_lHeaderHeight = lHeight; }
+
+	void SetBgColor(unsigned int dwColor) { m_dwBgColor = dwColor; }
+	void SetHeaderColor(unsigned int dwColor) { m_dwHeaderColor = dwColor; }
+	void SetBorderColor(unsigned int dwColor) { m_dwBorderColor = dwColor; }
+	void SetBorderSize(int lSize) { m_lBorderSize = lSize; }
+
+protected:
+	bool IsPointInsideHeader(int lX, int lY) const;
+
+protected:
+	std::string m_szTitle;
+	int m_lHeaderHeight;
+
+	unsigned int m_dwBgColor;
+	unsigned int m_dwHeaderColor;
+	unsigned int m_dwBorderColor;
+	int m_lBorderSize;
+
+	// --- Window stats ---
+	bool m_bCollapsed;
+	bool m_bDragging;
+	int m_lDragOffsetX;
+	int m_lDragOffsetY;
+
+	CUIButton* m_pBtnCollapse;
+	std::vector<CUIElement*> m_vChildren;
+};
 
 //-----------------------------------------------------------------------------
 // UI Manager / Canvas (Stores elements, handles dispatching)

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "../Engine/Renderer.h"
+#include "../Engine/3DObject.h"
 #include "../Engine/Camera.h"
 #include "../Engine/World.h"
 #include "../Engine/UI.h"
@@ -66,58 +67,99 @@ bool CApplication::Initialize(HINSTANCE hInstance)
 		m_pUIManager->AddElement(m_pFPSTextBox);
 
 
-		// --- Create Buttons panel ---
-		const int lBtnWidth = 80;
-		const int lBtnHeight = 24;
-		const int lBtnPadding = 6;
-		int lCurrentX = 10;
-		const int lBtnY = 8;
+		// --- Create Scene Outliner Window ---
+		CUIWindow* pSceneWindow = new CUIWindow(
+			10, 10,
+			280, 380,
+			"Scene Outliner",
+			0x1E1E1EF2,
+			0x282828FF,
+			0x454545FF,
+			1);
 
-		// Load button
-		CUIButton* pBtnLoad = new CUIButton(
-			lCurrentX, lBtnY,
-			lBtnWidth, lBtnHeight,
-			"Load",
-			[]() {
-				Utils::ODS("[UI_CALLBACK] Button 'Load' was clicked!");
+		const int lBtnY = 30;
+		const int lBtnHeight = 22;
+		const int lBtnWidth = 60;
+		const int lBtnPadding = 5;
+		int curBtnX = 6;
+
+		// [New]
+		CUIButton* pBtnNew = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "New", []() {
+			Utils::ODS("[SCENE] New Scene action triggered.");
+			});
+		pSceneWindow->AddChild(pBtnNew);
+		curBtnX += lBtnWidth + lBtnPadding;
+
+		// [Load]
+		CUIButton* pBtnLoad = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "Load", []() {
+			Utils::ODS("[SCENE] Load Scene dialog opened.");
+			});
+		pSceneWindow->AddChild(pBtnLoad);
+		curBtnX += lBtnWidth + lBtnPadding;
+
+		// [Save]
+		CUIButton* pBtnSave = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "Save", []() {
+			Utils::ODS("[SCENE] Save Scene action triggered.");
+			});
+		pSceneWindow->AddChild(pBtnSave);
+		curBtnX += lBtnWidth + lBtnPadding;
+
+		// [Export]
+		CUIButton* pBtnExport = new CUIButton(curBtnX, lBtnY, 68, lBtnHeight, "Export", []() {
+			Utils::ODS("[SCENE] Exporting sliced meshes to OBJ...");
+			});
+		pSceneWindow->AddChild(pBtnExport);
+
+		// Smart Tree (Scene Outliner)
+		const int lTreeY = 58;
+		const int lTreeWidth = 268;
+		const int lTreeHeight = 314;
+
+		CUISmartTree* pSceneTree = new CUISmartTree(6, lTreeY, lTreeWidth, lTreeHeight, 20, 12);
+
+		const std::vector<C3DObject*>& vWorldObjects = m_pWorld->GetObjects();
+
+		// --- Fill test hierarchy for demonstration of slicing functionality ---
+		if (!vWorldObjects.empty())
+		{
+			if (vWorldObjects.size() > 0)
+				pSceneTree->AddRoot("Ground Plane", vWorldObjects[0]);
+
+			if (vWorldObjects.size() > 1)
+				pSceneTree->AddRoot("Red Cube", vWorldObjects[1]);
+
+			SUITreeNode* pSineRoot = pSceneTree->AddRoot("Sine Mesh (Source)", (vWorldObjects.size() > 2 ? vWorldObjects[2] : nullptr));
+			{
+				pSceneTree->AddChild(pSineRoot, "SubMesh Upper A", nullptr);
+				pSceneTree->AddChild(pSineRoot, "SubMesh Upper B", nullptr);
+				pSceneTree->AddChild(pSineRoot, "SubMesh Lower", nullptr);
+				pSceneTree->AddChild(pSineRoot, "Cut Surface Cap", nullptr);
+			}
+
+			pSceneTree->AddRoot("Slicing Plane (Tool)", nullptr);
+		}
+
+		// Switch 3D Object visibility when toggling the checkbox in the tree
+		pSceneTree->SetOnToggleVisibility([](SUITreeNode* pNode, bool bVisible) {
+			if (pNode != nullptr && pNode->pUserData != nullptr)
+			{
+				C3DObject* pObj = static_cast<C3DObject*>(pNode->pUserData);
+				pObj->SetVisible(bVisible);
+				Utils::ODS("[SCENE_UI] Visibility of '%s' -> %s", pNode->sText.c_str(), bVisible ? "SHOWN" : "HIDDEN");
+			}
 			});
 
-		pBtnLoad->SetNormalColor(0x353535CC);
-		pBtnLoad->SetHoverColor(0x505050FF);
-		pBtnLoad->SetPressedColor(0x2060A0FF);
-		m_pUIManager->AddElement(pBtnLoad);
-
-		lCurrentX += lBtnWidth + lBtnPadding;
-
-		// Save button
-		CUIButton* pBtnSave = new CUIButton(
-			lCurrentX, lBtnY,
-			lBtnWidth, lBtnHeight,
-			"Save",
-			[]() {
-				Utils::ODS("[UI_CALLBACK] Button 'Save' was clicked!");
+		// Log selection of a node in the tree
+		pSceneTree->SetOnSelect([](SUITreeNode* pNode) {
+			if (pNode != nullptr)
+			{
+				Utils::ODS("[SCENE_UI] Selected scene entity: '%s' (Ptr: %p)", pNode->sText.c_str(), pNode->pUserData);
+			}
 			});
 
-		pBtnSave->SetNormalColor(0x353535CC);
-		pBtnSave->SetHoverColor(0x505050FF);
-		pBtnSave->SetPressedColor(0x2060A0FF);
-		m_pUIManager->AddElement(pBtnSave);
+		pSceneWindow->AddChild(pSceneTree);
 
-		lCurrentX += lBtnWidth + lBtnPadding;
-
-		// Export button
-		CUIButton* pBtnExport = new CUIButton(
-			lCurrentX, lBtnY,
-			lBtnWidth, lBtnHeight,
-			"Export",
-			[]() {
-				Utils::ODS("[UI_CALLBACK] Button 'Export' was clicked!");
-			});
-
-		pBtnExport->SetNormalColor(0x353535CC);
-		pBtnExport->SetHoverColor(0x505050FF);
-		pBtnExport->SetPressedColor(0x2060A0FF);
-		m_pUIManager->AddElement(pBtnExport);
+		m_pUIManager->AddElement(pSceneWindow);
 	}
 	m_bRunning = true;
 
