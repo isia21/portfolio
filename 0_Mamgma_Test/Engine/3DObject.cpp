@@ -1,16 +1,19 @@
 #include "stdafx.h"
+
 #include "3DObject.h"
 
 //-----------------------------------------------------------------------------
-// 3D object
+// C3DObject
 //-----------------------------------------------------------------------------
 C3DObject::C3DObject()
-	: m_eObjectType(OBJECT_TYPE_SOURCE_MODEL)
+	: m_eObjectType(eOT_SourceModel)
 	, m_bVisible(true)
-	, m_vPosition({ 0.0f, 0.0f, 0.0f })
-	, m_vRotation({ 0.0f, 0.0f, 0.0f })
-	, m_vScale({ 1.0f, 1.0f, 1.0f })
+	, m_vPosition(0.0f, 0.0f, 0.0f)
+	, m_vRotation(0.0f, 0.0f, 0.0f)
+	, m_vScale(1.0f, 1.0f, 1.0f)
 	, m_pParent(nullptr)
+	, m_dwModelColor(0xFFFFFFFF)
+	, m_eRenderType(eRT_Poligon)
 {}
 
 C3DObject::~C3DObject()
@@ -22,64 +25,342 @@ C3DObject::~C3DObject()
 	m_pParent = nullptr;
 }
 
-//-----------------------------------------------------------------------------
-// Rendering
-//-----------------------------------------------------------------------------
-void C3DObject::Render()
-{
-	if (!m_bVisible)
-		return;
 
-	// TODO:
-	// Apply object transform.
-	// Render indexed geometry from m_vVertices / m_vIndices.
+//-----------------------------------------------------------------------------
+// Primitive factory
+//-----------------------------------------------------------------------------
+C3DObject* C3DObject::CreatePrimitive(EPrimitiveType eType, float fScale)
+{
+	if (fScale <= 0.0f)
+		return nullptr;
+
+
+	switch (eType)
+	{
+	case ePR_Cube:
+		return CreateCube(fScale);
+
+	case ePR_Plane:
+		return CreatePlane(fScale);
+
+	case ePR_Sphere:
+		return CreateSphere(fScale);
+
+	default:
+		break;
+	}
+
+	return nullptr;
 }
 
+
 //-----------------------------------------------------------------------------
-// Serialization
+// Create cube
+//
+// fHalfSize defines half of the cube side.
+// Local coordinates:
+//
+//        (-s,+s,+s)       (+s,+s,+s)
+//              +-------------+
+//             /|            /|
+//            / |           / |
+//           +-------------+  |
+//           |  |          |  |
+//           |  +----------|--+
+//           | /           | /
+//           |/            |/
+//           +-------------+
+//
+// The cube is centered at local origin.
 //-----------------------------------------------------------------------------
-bool C3DObject::Load(const char* pszFileName)
+C3DObject* C3DObject::CreateCube(float fHalfSize)
 {
-	if (pszFileName == nullptr)
-		return false;
+	C3DObject* pObject = new C3DObject();
 
-	// TODO:
-	// Load object geometry and properties from XML.
+	pObject->m_eObjectType = eOT_SourceModel;
 
-	return false;
+	const float s = fHalfSize;
+
+	const unsigned int dwColor = 0xFFFFFFFF;
+
+	pObject->m_vVertices =
+	{
+		{ -s, -s, -s, dwColor },
+		{  s, -s, -s, dwColor },
+		{  s,  s, -s, dwColor },
+		{ -s,  s, -s, dwColor },
+
+		{ -s, -s,  s, dwColor },
+		{  s, -s,  s, dwColor },
+		{  s,  s,  s, dwColor },
+		{ -s,  s,  s, dwColor }
+	};
+
+	pObject->m_vIndices =
+	{
+		// Front
+		4, 5, 6,
+		4, 6, 7,
+
+		// Back
+		0, 2, 1,
+		0, 3, 2,
+
+		// Left
+		0, 4, 7,
+		0, 7, 3,
+
+		// Right
+		1, 2, 6,
+		1, 6, 5,
+
+		// Top
+		3, 7, 6,
+		3, 6, 2,
+
+		// Bottom
+		0, 1, 5,
+		0, 5, 4
+	};
+
+	return pObject;
 }
 
-bool C3DObject::Save(const char* pszFileName)
+
+//-----------------------------------------------------------------------------
+// Create plane
+//
+// fHalfSize defines half of the plane side.
+// The plane lies on the XZ plane and is centered at local origin.
+//-----------------------------------------------------------------------------
+C3DObject* C3DObject::CreatePlane(float fHalfSize)
 {
-	if (pszFileName == nullptr)
-		return false;
+	C3DObject* pObject = new C3DObject();
 
-	// TODO:
-	// Save object geometry and properties to XML.
+	pObject->m_eObjectType = eOT_SourceModel;
 
-	return false;
+	const float s = fHalfSize;
+
+	const unsigned int dwColor = 0xFFFFFFFF;
+
+	pObject->m_vVertices =
+	{
+		{ -s, 0.0f, -s, dwColor },
+		{  s, 0.0f, -s, dwColor },
+		{  s, 0.0f,  s, dwColor },
+		{ -s, 0.0f,  s, dwColor }
+	};
+
+	// Counter-clockwise when viewed from +Y.
+	pObject->m_vIndices =
+	{
+		0, 1, 2,
+		0, 2, 3
+	};
+
+	return pObject;
 }
+
+
+//-----------------------------------------------------------------------------
+// Create sphere
+//
+// fRadius defines sphere radius.
+//
+// The sphere is generated as a latitude/longitude grid.
+// This deliberately produces ordinary vertices and triangle indices,
+// because the resulting geometry will later be processed by slicing.
+//-----------------------------------------------------------------------------
+C3DObject* C3DObject::CreateSphere(float fRadius)
+{
+	C3DObject* pObject = new C3DObject();
+
+	pObject->m_eObjectType = eOT_SourceModel;
+
+	const int lSegments = 32;
+	const int lRings = 16;
+
+	const unsigned int dwColor = 0xFFFFFFFF;
+
+	const float fPi = 3.14159265358979323846f;
+
+	for (int y = 0; y <= lRings; ++y)
+	{
+		const float fV = static_cast<float>(y) / static_cast<float>(lRings);
+		const float fPhi = fV * fPi;
+
+		const float fSinPhi = sinf(fPhi);
+		const float fCosPhi = cosf(fPhi);
+
+		for (int x = 0; x <= lSegments; ++x)
+		{
+			const float fU = static_cast<float>(x) / static_cast<float>(lSegments);
+			const float fTheta = fU * 2.0f * fPi;
+
+			const float fSinTheta = sinf(fTheta);
+			const float fCosTheta = cosf(fTheta);
+
+			Vertex3D vertex = {};
+
+			vertex.x = fRadius * fSinPhi * fCosTheta;
+			vertex.y = fRadius * fCosPhi;
+			vertex.z = fRadius * fSinPhi * fSinTheta;
+			vertex.dwColor = dwColor;
+
+			pObject->m_vVertices.push_back(vertex);
+		}
+	}
+
+	const int lStride = lSegments + 1;
+
+	for (int y = 0; y < lRings; ++y)
+	{
+		for (int x = 0; x < lSegments; ++x)
+		{
+			const unsigned int dwCurrent =
+				static_cast<unsigned int>(y * lStride + x);
+
+			const unsigned int dwNext =
+				dwCurrent + 1;
+
+			const unsigned int dwBelow =
+				static_cast<unsigned int>((y + 1) * lStride + x);
+
+			const unsigned int dwBelowNext =
+				dwBelow + 1;
+
+			pObject->m_vIndices.push_back(dwCurrent);
+			pObject->m_vIndices.push_back(dwBelow);
+			pObject->m_vIndices.push_back(dwNext);
+
+			pObject->m_vIndices.push_back(dwNext);
+			pObject->m_vIndices.push_back(dwBelow);
+			pObject->m_vIndices.push_back(dwBelowNext);
+		}
+	}
+
+	return pObject;
+}
+
 
 //-----------------------------------------------------------------------------
 // Transform
 //-----------------------------------------------------------------------------
 void C3DObject::SetPosition(float x, float y, float z)
 {
-	m_vPosition.x = x;
-	m_vPosition.y = y;
-	m_vPosition.z = z;
+	m_vPosition = Vector3(x, y, z);
 }
 
 void C3DObject::SetRotation(float x, float y, float z)
 {
-	m_vRotation.x = x;
-	m_vRotation.y = y;
-	m_vRotation.z = z;
+	m_vRotation = Vector3(x, y, z);
 }
 
 void C3DObject::SetScale(float x, float y, float z)
 {
-	m_vScale.x = x;
-	m_vScale.y = y;
-	m_vScale.z = z;
+	m_vScale = Vector3(x, y, z);
+}
+
+
+//-----------------------------------------------------------------------------
+// Hierarchy
+//-----------------------------------------------------------------------------
+void C3DObject::SetParent(C3DObject* pParent)
+{
+	if (m_pParent == pParent)
+		return;
+
+	m_pParent = pParent;
+
+	if (m_pParent != nullptr)
+		m_pParent->m_vChildren.push_back(this);
+}
+
+
+//-----------------------------------------------------------------------------
+// Rendering
+//-----------------------------------------------------------------------------
+void C3DObject::Render()
+{
+	if (!m_bVisible || m_vVertices.empty() || m_vIndices.empty())
+		return;
+
+	glPushMatrix();
+
+	// --- Object transform ---
+	glTranslatef(m_vPosition.x, m_vPosition.y, m_vPosition.z);
+
+	glRotatef(m_vRotation.x, 1.0f, 0.0f, 0.0f);
+	glRotatef(m_vRotation.y, 0.0f, 1.0f, 0.0f);
+	glRotatef(m_vRotation.z, 0.0f, 0.0f, 1.0f);
+
+	glScalef(m_vScale.x, m_vScale.y, m_vScale.z);
+
+	// --- Render Config ---
+	if (m_eRenderType == eRT_Wireframe)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	else
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	glBegin(GL_TRIANGLES);
+
+	// --- Prepare model color ---
+	const float modelR = static_cast<float>((m_dwModelColor >> 24) & 0xFF) / 255.0f;
+	const float modelG = static_cast<float>((m_dwModelColor >> 16) & 0xFF) / 255.0f;
+	const float modelB = static_cast<float>((m_dwModelColor >> 8) & 0xFF) / 255.0f;
+	const float modelA = static_cast<float>(m_dwModelColor & 0xFF) / 255.0f;
+
+	for (size_t i = 0; i < m_vIndices.size(); ++i)
+	{
+		const unsigned int index = m_vIndices[i];
+
+		if (index >= m_vVertices.size())
+			continue;
+
+		const Vertex3D& vertex = m_vVertices[index];
+
+		// --- Prepare vertex color ---
+		const float vertR = static_cast<float>((vertex.dwColor >> 24) & 0xFF) / 255.0f;
+		const float vertG = static_cast<float>((vertex.dwColor >> 16) & 0xFF) / 255.0f;
+		const float vertB = static_cast<float>((vertex.dwColor >> 8) & 0xFF) / 255.0f;
+		const float vertA = static_cast<float>(vertex.dwColor & 0xFF) / 255.0f;
+
+		float finalR = modelR * vertR;
+		float finalG = modelG * vertG;
+		float finalB = modelB * vertB;
+		float finalA = modelA * vertA;
+
+		glColor4f(finalR, finalG, finalB, finalA);
+		glVertex3f(vertex.x, vertex.y, vertex.z);
+	}
+	glEnd();
+
+	// --- Render reset states
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	if (m_eRenderType == eRT_Wireframe)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+
+	glPopMatrix();
+
+#ifdef _DEBUG
+	static unsigned long s_lFrame = 0;
+	Utils::ODS("[OBJECT] Frame %lu", ++s_lFrame);
+#endif
+}
+
+
+//-----------------------------------------------------------------------------
+// Serialization
+//-----------------------------------------------------------------------------
+bool C3DObject::Load()
+{
+	// XML loading will be implemented later.
+	return false;
+}
+
+bool C3DObject::Save()
+{
+	// XML saving will be implemented later.
+	return false;
 }

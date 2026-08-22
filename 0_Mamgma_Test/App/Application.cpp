@@ -186,6 +186,13 @@ void CApplication::Render()
 	if (m_pWorld != nullptr)
 		m_pRenderer->SetCamera(m_pWorld->GetCamera());
 
+
+	// --- Render World Objects ---
+	for (C3DObject* pObject : m_pWorld->GetObjects())
+		m_pRenderer->Draw(pObject);
+
+	// m_pRenderer->Render();
+
 	// --- Draw UI ---
 	{
 		const int lRectWidth = 160;
@@ -206,8 +213,14 @@ void CApplication::Render()
 			m_fFrameTime * 1000.0);
 	}
 
+
 	// --- Render all scene/frame data -- 
 	m_pRenderer->Render();
+
+#ifdef _DEBUG
+	static unsigned long s_lFrame = 0;
+	Utils::ODS("[APP] Frame %lu", ++s_lFrame);
+#endif
 }
 
 void CApplication::Resize(int width, int height)

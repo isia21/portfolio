@@ -121,6 +121,7 @@ bool CRenderer::InitOpenGL()
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
+	glClearDepth(1.0);
 
 	return true;
 }
@@ -209,6 +210,9 @@ void CRenderer::Clear()
 		return;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 }
 
 void CRenderer::Render()
@@ -228,7 +232,10 @@ void CRenderer::Render()
 	Render2D();
 
 	SwapBuffers(m_hDC);
-
+#ifdef _DEBUG
+	static unsigned long s_lFrame = 0;
+	Utils::ODS("[RENDER] Frame %lu", ++s_lFrame);
+#endif
 	ClearRenderQueues();
 }
 

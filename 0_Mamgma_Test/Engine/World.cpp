@@ -1,9 +1,10 @@
 #include "stdafx.h"
 
-#include "World.h"
 
 #include "../Engine/3DObject.h"
 #include "../Engine/Camera.h"
+
+#include "World.h"
 
 
 //-----------------------------------------------------------------------------
@@ -27,6 +28,93 @@ bool CWorld::Init()
 
 	if (m_pCamera == nullptr)
 		return false;
+
+
+	//-------------------------------------------------------------------------
+	// Test scene
+	//-------------------------------------------------------------------------
+
+	// --- Ground plane ---
+	{
+		C3DObject* pObject = C3DObject::CreatePrimitive(C3DObject::ePR_Plane, 10.0f);
+
+		if (pObject != nullptr)
+		{
+			pObject->SetPosition(0.0f, -2.0f, 0.0f);
+			pObject->SetVisible(true);
+			pObject->SetModelColor(0x808080FF);
+			m_vObjects.push_back(pObject);
+		}
+	}
+
+	// --- Cube #1 ---
+	{
+		C3DObject* pObject =
+			C3DObject::CreatePrimitive(C3DObject::ePR_Cube, 1.0f);
+
+		if (pObject != nullptr)
+		{
+			pObject->SetPosition(-3.0f, 0.0f, 0.0f);
+			pObject->SetRotation(0.0f, 0.0f, 0.0f);
+			pObject->SetVisible(true);
+			pObject->SetModelColor(0xFF0000FF);
+			m_vObjects.push_back(pObject);
+		}
+	}
+
+	// --- Cube #2 ---
+	{
+		C3DObject* pObject =
+			C3DObject::CreatePrimitive(C3DObject::ePR_Cube, 1.5f);
+
+		if (pObject != nullptr)
+		{
+			pObject->SetPosition(3.0f, 0.0f, 0.0f);
+			pObject->SetRotation(0.0f, 45.0f, 0.0f);
+			pObject->SetVisible(true);
+			pObject->SetModelColor(0x00FF00FF);
+
+			m_vObjects.push_back(pObject);
+		}
+	}
+
+	// --- Sphere #1 ---
+	{
+		C3DObject* pObject =
+			C3DObject::CreatePrimitive(C3DObject::ePR_Sphere, 1.0f);
+
+		if (pObject != nullptr)
+		{
+			pObject->SetPosition(-2.0f, 0.0f, 4.0f);
+			pObject->SetVisible(true);
+			pObject->SetModelColor(0xFFFF00FF);
+
+			m_vObjects.push_back(pObject);
+		}
+	}
+
+	// --- Sphere #2 ---
+	{
+		C3DObject* pObject =
+			C3DObject::CreatePrimitive(C3DObject::ePR_Sphere, 1.5f);
+
+		if (pObject != nullptr)
+		{
+			pObject->SetPosition(2.0f, 1.0f, 4.0f);
+			pObject->SetVisible(true);
+			pObject->SetModelColor(0x0000FFFF);
+			pObject->SetRenderType(C3DObject::ERenderType::eRT_Wireframe);
+
+			m_vObjects.push_back(pObject);
+		}
+	}
+
+	Utils::ODS(
+		"[INFO] World initialized. Objects: %d",
+		static_cast<int>(m_vObjects.size()));
+
+	return true;
+
 
 	return true;
 }
@@ -91,8 +179,9 @@ void CWorld::RemoveObject(C3DObject* pObject)
 	}
 }
 
-C3DObject* CWorld::CreateObject(EObjectType eType)
+C3DObject* CWorld::CreateObject(int lType)
 {
+	C3DObject::EObjectType eType = (C3DObject::EObjectType)lType;
 	C3DObject* pObject = new C3DObject();
 
 	if (pObject == nullptr)

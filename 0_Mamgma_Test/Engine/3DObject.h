@@ -1,26 +1,6 @@
 #pragma once
 
-//-----------------------------------------------------------------------------
-// Object type
-//-----------------------------------------------------------------------------
-enum EObjectType
-{
-	OBJECT_TYPE_SOURCE_MODEL = 0,
-	OBJECT_TYPE_SLICER,
-	OBJECT_TYPE_MESH_PART
-};
-
-
-//-----------------------------------------------------------------------------
-// 3D vector
-//-----------------------------------------------------------------------------
-struct Vector3
-{
-	float x;
-	float y;
-	float z;
-};
-
+#include "../Math/Vector3.h"
 
 //-----------------------------------------------------------------------------
 // 3D vertex
@@ -41,16 +21,51 @@ struct Vertex3D
 class C3DObject
 {
 public:
+	enum EObjectType
+	{
+		eOT_SourceModel = 0,
+		eOT_Slicer,
+		eOT_MeshParts
+	};
+	enum ERenderType
+	{
+		eRT_Poligon,
+		eRT_Wireframe
+	};
+
+	enum EPrimitiveType
+	{
+		ePR_Cube = 0,
+		ePR_Plane,
+		ePR_Sphere
+	};
+
+
+public:
 	C3DObject();
 	~C3DObject();
 
-public:
-	void Render();
-
-	bool Load(const char* pszFileName);
-	bool Save(const char* pszFileName);
 
 public:
+	// --- Object params ---
+	void SetModelColor(DWORD dwColor) { m_dwModelColor = dwColor; }
+	void SetRenderType(ERenderType eType) { m_eRenderType = eType; }
+
+	// --- Primitive factory ---
+	static C3DObject* CreatePrimitive(EPrimitiveType eType, float fScale);
+
+
+	// --- Object type ---
+	void SetObjectType(EObjectType eType) { m_eObjectType = eType; }
+	EObjectType GetObjectType() const { return m_eObjectType; }
+
+
+	// --- Object visibility ---
+	void SetVisible(bool bVisible) { m_bVisible = bVisible; }
+	bool IsVisible() const { return m_bVisible; }
+
+
+	// --- Object transform ---
 	void SetPosition(float x, float y, float z);
 	void SetRotation(float x, float y, float z);
 	void SetScale(float x, float y, float z);
@@ -59,19 +74,42 @@ public:
 	const Vector3& GetRotation() const { return m_vRotation; }
 	const Vector3& GetScale() const { return m_vScale; }
 
-	void SetVisible(bool bVisible) { m_bVisible = bVisible; }
-	bool IsVisible() const { return m_bVisible; }
 
-	void SetObjectType(EObjectType eType) { m_eObjectType = eType; }
-	EObjectType GetObjectType() const { return m_eObjectType; }
-
-public:
-	void SetParent(C3DObject* pParent) { m_pParent = pParent; }
+	// --- Object hierarchy ---
+	void SetParent(C3DObject* pParent);
 	C3DObject* GetParent() const { return m_pParent; }
 
 	const std::vector<C3DObject*>& GetChildren() const { return m_vChildren; }
 
-protected:
+
+	// --- Geometry ---
+	const std::vector<Vertex3D>& GetVertices() const { return m_vVertices; }
+	const std::vector<unsigned int>& GetIndices() const { return m_vIndices; }
+
+	std::vector<Vertex3D>& GetVertices() { return m_vVertices; }
+	std::vector<unsigned int>& GetIndices() { return m_vIndices; }
+
+
+	// --- Rendering ---
+	void Render();
+
+
+	// --- Serialization ---
+	bool Load();
+	bool Save();
+
+
+private:
+	// --- Primitive generators ---
+	static C3DObject* CreateCube(float fHalfSize);
+	static C3DObject* CreatePlane(float fHalfSize);
+	static C3DObject* CreateSphere(float fRadius);
+
+
+private:
+	// --- Object stats ---
+	DWORD m_dwModelColor;
+	ERenderType m_eRenderType;
 
 	// --- Object type ---
 	EObjectType m_eObjectType;

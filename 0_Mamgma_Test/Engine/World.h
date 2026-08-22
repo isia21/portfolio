@@ -1,7 +1,6 @@
 #pragma once
-class C3DObject;
 class CCamera;
-enum EObjectType;
+class C3DObject;
 
 class CWorld
 {
@@ -18,7 +17,7 @@ public:
 	void AddObject(C3DObject* pObject);
 	void RemoveObject(C3DObject* pObject);
 
-	C3DObject* CreateObject(EObjectType eType);
+	C3DObject* CreateObject(int lType);
 
 	CCamera* GetCamera() const;
 
