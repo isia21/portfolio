@@ -52,7 +52,7 @@ private:
 	std::string m_sFilePath;
 	bool m_bModified;
 
-	bool m_bStructureChanged; // <-- Добавить флаг
+	bool m_bStructureChanged;
 
 	std::vector<C3DObject*> m_vObjects;
 };
