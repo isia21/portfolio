@@ -1,6 +1,6 @@
 #pragma once
 class CRenderer;
-class CCamera;
+class CWorld;
 
 class CApplication
 {
@@ -10,7 +10,7 @@ public:
 	CApplication()
 		: m_hInstance(nullptr), m_hWnd(nullptr),
 		m_pRenderer(nullptr),
-		m_pCamera(nullptr),
+		m_pWorld(nullptr),
 		m_bRunning(false),
 		m_lWidth(1280), m_lHeight(720),
 		m_bLockFPS(true), m_lFPSLock(1200){};
@@ -42,7 +42,7 @@ private:
 
 	// --- Render ring ---
 	CRenderer* m_pRenderer;
-	CCamera* m_pCamera;
+	CWorld* m_pWorld;
 
 	// --- Application states ---
 	bool m_bRunning;

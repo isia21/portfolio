@@ -2,6 +2,7 @@
 
 #include "../Engine/Renderer.h"
 #include "../Engine/Camera.h"
+#include "../Engine/World.h"
 
 #include "Application.h"
 
@@ -10,7 +11,7 @@ IMPLEMENT_SINGLETON(CApplication);
 CApplication::~CApplication()
 {
 	SAFEDELETE(m_pRenderer);
-	SAFEDELETE(m_pCamera);
+	SAFEDELETE(m_pWorld);
 }
 
 bool CApplication::Initialize(HINSTANCE hInstance)
@@ -30,15 +31,19 @@ bool CApplication::Initialize(HINSTANCE hInstance)
 	QueryPerformanceFrequency(&m_liPerformanceFrequency);
 	QueryPerformanceCounter(&m_liFrameStart);
 
+	// --- Init renderer core ---
 	m_pRenderer = new CRenderer();
 	m_pRenderer->SetVSync(false);
 	if (!m_pRenderer->Init(m_hWnd, m_lWidth, m_lHeight, false))
 		return false;
 
+	// --- Init world and camera ---
+	m_pWorld = new CWorld();
+	if (m_pWorld == nullptr || !m_pWorld->Init())
+		return false;
+	m_pWorld->GetCamera()->SetViewport(m_lWidth, m_lHeight);
+	m_pWorld->GetCamera()->SetDrunkMode(true);
 
-	m_pCamera = new CCamera();
-	m_pCamera->SetViewport(m_lWidth, m_lHeight);
-	m_pCamera->SetDrunkMode(true);
 
 	m_bRunning = true;
 
@@ -163,9 +168,9 @@ void CApplication::Update()
 	//
 	// Input processing
 	
-	// --- Camera processing ---
-	if (m_pCamera != nullptr)
-		m_pCamera->Update(static_cast<float>(m_fFrameTime));
+	// --- World update ---
+	if (m_pWorld != nullptr)
+		m_pWorld->Update(static_cast<float>(m_fFrameTime));
 
 	// Object transforms
 	// Animation
@@ -177,7 +182,9 @@ void CApplication::Render()
 {
 	// --- Clear screen and set camera ---
 	m_pRenderer->Clear();
-	m_pRenderer->SetCamera(m_pCamera);
+
+	if (m_pWorld != nullptr)
+		m_pRenderer->SetCamera(m_pWorld->GetCamera());
 
 	// --- Draw UI ---
 	{
@@ -216,8 +223,8 @@ void CApplication::Resize(int width, int height)
 	if (m_pRenderer != nullptr)
 		m_pRenderer->Resize(m_lWidth, m_lHeight);
 
-	if (m_pCamera != nullptr)
-		m_pCamera->SetViewport(m_lWidth, m_lHeight);
+	if (m_pWorld != nullptr && m_pWorld->GetCamera() != nullptr)
+		m_pWorld->GetCamera()->SetViewport(m_lWidth, m_lHeight);
 }
 
 void CApplication::Shutdown()
@@ -228,6 +235,9 @@ void CApplication::Shutdown()
 
 	if (m_pRenderer != nullptr)
 		m_pRenderer->Shutdown();
+
+	if (m_pWorld != nullptr)
+		m_pWorld->Shutdown();
 
 	if (m_hWnd != nullptr)
 	{
