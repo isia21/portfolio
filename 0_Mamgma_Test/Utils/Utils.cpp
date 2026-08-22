@@ -41,10 +41,21 @@ namespace {
 		if (!g_logFile)
 			return;
 
+		SYSTEMTIME st = {};
+		GetLocalTime(&st);
+
 		EnterCriticalSection(&g_logCriticalSection);
-		fputs(message, g_logFile);
-		fputc('\n', g_logFile);
+
+		fprintf_s(
+			g_logFile,
+			"[%02d:%02d:%02d.%03d] %s\n",
+			st.wHour,
+			st.wMinute,
+			st.wSecond,
+			st.wMilliseconds,
+			message);
 		fflush(g_logFile);
+
 		LeaveCriticalSection(&g_logCriticalSection);
 	}
 }

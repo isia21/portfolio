@@ -51,6 +51,7 @@ public:
 public:
 	// --- Object params ---
 	void SetModelColor(DWORD dwColor) { m_dwModelColor = dwColor; }
+	DWORD GetModelColor() const { return m_dwModelColor; }
 	void SetRenderType(ERenderType eType) { m_eRenderType = eType; }
 	ERenderType GetRenderType() const { return m_eRenderType; }
 
@@ -92,8 +93,9 @@ public:
 	void Render();
 
 	// --- Serialization ---
-	bool Load();
-	bool Save();
+	bool LoadFromFile(const char* pszFilePath);
+	bool SaveToFile(const char* pszFilePath);
+	bool ExportToOBJ(const char* pszFilePath);
 
 	// --- Object name ---
 	const char* GetName() const { return m_strName.c_str(); }

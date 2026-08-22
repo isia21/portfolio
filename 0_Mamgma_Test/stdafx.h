@@ -2,6 +2,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
+#include <commdlg.h>
 
 #include <cmath>
 #include <cstdlib>
@@ -12,6 +13,9 @@
 #include <direct.h>
 #include <time.h>
 
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 #include <functional>
 #include <algorithm>
 #include <string>
@@ -23,3 +27,5 @@
 
 #include "Utils/Utils.h"
 #include "Utils/Singleton.h"
+
+#include "../_3rdparty/pugixml/src/pugixml.hpp"

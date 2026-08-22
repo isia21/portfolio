@@ -48,6 +48,9 @@
     <ClCompile Include="Engine\Scene.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="..\_3rdparty\pugixml\src\pugixml.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

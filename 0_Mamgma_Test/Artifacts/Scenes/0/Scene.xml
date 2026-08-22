@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CADAssembly version="1.0" name="Default Test Scene">
+    <Metadata>
+        <Generator>MeshCut Studio CAD Core</Generator>
+        <Units>Millimeters</Units>
+        <UpAxis>Y</UpAxis>
+    </Metadata>
+    <ComponentInstances count="5">
+        <Instance id="0" name="Ground Plane" source="Models/Ground_Plane.model.xml">
+            <Transform>
+                <Position x="0" y="-2" z="0" />
+                <Rotation x="0" y="0" z="0" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Solid" color="0x808080FF" />
+        </Instance>
+        <Instance id="1" name="Cube #1 (Red)" source="Models/Cube__1__Red_.model.xml">
+            <Transform>
+                <Position x="-3" y="0" z="0" />
+                <Rotation x="0" y="0" z="0" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Solid" color="0xFF0000FF" />
+        </Instance>
+        <Instance id="2" name="Cube #2 (Green)" source="Models/Cube__2__Green_.model.xml">
+            <Transform>
+                <Position x="3" y="0" z="0" />
+                <Rotation x="0" y="45" z="0" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Solid" color="0x00FF00FF" />
+        </Instance>
+        <Instance id="3" name="Sphere #2 (Blue Wire)" source="Models/Sphere__2__Blue_Wire_.model.xml">
+            <Transform>
+                <Position x="2" y="1" z="4" />
+                <Rotation x="0" y="0" z="0" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Wireframe" color="0x0000FFFF" />
+        </Instance>
+        <Instance id="4" name="Sine Mesh (Source)" source="Models/Sine_Mesh__Source_.model.xml">
+            <Transform>
+                <Position x="0" y="2" z="-8" />
+                <Rotation x="0" y="0" z="0" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Wireframe" color="0xFF00FFFF" />
+        </Instance>
+    </ComponentInstances>
+</CADAssembly>

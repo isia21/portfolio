@@ -86,30 +86,131 @@ bool CApplication::Initialize(HINSTANCE hInstance)
 			int curBtnX = 6;
 
 			// [New]
-			CUIButton* pBtnNew = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "New", []() {
-				Utils::ODS("[SCENE] New Scene action triggered.");
+			CUIButton* pBtnNew = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "New", [this]() {
+				if (m_pWorld == nullptr || m_pWorld->GetScene() == nullptr)
+					return;
+
+				CScene* pScene = m_pWorld->GetScene();
+
+				// check if the scene has unsaved changes
+				if (pScene->IsModified())
+				{
+					const int lResult = MessageBoxA(
+						m_hWnd,
+						"The current scene has unsaved changes.\nAre you sure you want to create a new scene?",
+						"New Scene Confirmation",
+						MB_YESNO | MB_ICONQUESTION);
+
+					if (lResult != IDYES)
+						return; // Отмена действия
+				}
+
+				// reset the selected object to nullptr and update the inspector
+				m_pSelectedObject = nullptr;
+				UpdateInspector();
+
+				// recreate the default scene
+				pScene->CreateDefault();
+
+				Utils::ODS("[UI] New default scene created.");
 				});
 			pSceneWindow->AddChild(pBtnNew);
 			curBtnX += lBtnWidth + lBtnPadding;
 
 			// [Load]
-			CUIButton* pBtnLoad = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "Load", []() {
-				Utils::ODS("[SCENE] Load Scene dialog opened.");
+			CUIButton* pBtnLoad = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "Load", [this]() {
+				if (m_pWorld == nullptr || m_pWorld->GetScene() == nullptr)
+					return;
+
+				char szFilePath[MAX_PATH] = "";
+
+				OPENFILENAMEA ofn = {};
+				ofn.lStructSize = sizeof(ofn);
+				ofn.hwndOwner = m_hWnd;
+				ofn.lpstrFilter = "CAD Assembly XML (*.xml)\0*.xml\0All Files (*.*)\0*.*\0";
+				ofn.lpstrFile = szFilePath;
+				ofn.nMaxFile = sizeof(szFilePath);
+				ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+				ofn.lpstrTitle = "Open CAD Scene Assembly";
+
+				if (GetOpenFileNameA(&ofn))
+				{
+					if (m_pWorld->GetScene()->LoadFromFile(szFilePath))
+					{
+						m_pSelectedObject = nullptr;
+						UpdateInspector();
+						Utils::ODS("[UI] Scene loaded from: %s", szFilePath);
+					}
+				}
 				});
 			pSceneWindow->AddChild(pBtnLoad);
 			curBtnX += lBtnWidth + lBtnPadding;
 
 			// [Save]
-			CUIButton* pBtnSave = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "Save", []() {
-				Utils::ODS("[SCENE] Save Scene action triggered.");
+			CUIButton* pBtnSave = new CUIButton(curBtnX, lBtnY, lBtnWidth, lBtnHeight, "Save", [this]() {
+				if (m_pWorld == nullptr || m_pWorld->GetScene() == nullptr)
+					return;
+
+				char szFilePath[MAX_PATH] = "Scene.xml";
+
+				OPENFILENAMEA ofn = {};
+				ofn.lStructSize = sizeof(ofn);
+				ofn.hwndOwner = m_hWnd;
+				ofn.lpstrFilter = "CAD Assembly XML (*.xml)\0*.xml\0All Files (*.*)\0*.*\0";
+				ofn.lpstrFile = szFilePath;
+				ofn.nMaxFile = sizeof(szFilePath);
+				ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
+				ofn.lpstrDefExt = "xml";
+				ofn.lpstrTitle = "Save CAD Scene Assembly";
+
+				
+				if (GetSaveFileNameA(&ofn))
+				{
+					CScene* pScene = m_pWorld->GetScene();
+					if (pScene->SaveToFile(szFilePath))
+					{
+						Utils::ODS("[UI] Scene successfully saved to: %s", szFilePath);
+					}
+					else
+					{
+						Utils::ODS("[UI_ERROR] Failed to save scene to: %s", szFilePath);
+					}
+				}
 				});
 			pSceneWindow->AddChild(pBtnSave);
 			curBtnX += lBtnWidth + lBtnPadding;
 
 			// [Export]
-			CUIButton* pBtnExport = new CUIButton(curBtnX, lBtnY, 68, lBtnHeight, "Export", []() {
-				Utils::ODS("[SCENE] Exporting sliced meshes to OBJ...");
+			CUIButton* pBtnExport = new CUIButton(curBtnX, lBtnY, 68, lBtnHeight, "Export", [this]() {
+				if (m_pWorld == nullptr || m_pWorld->GetScene() == nullptr)
+					return;
+
+				char szFilePath[MAX_PATH] = "Scene.obj";
+
+				OPENFILENAMEA ofn = {};
+				ofn.lStructSize = sizeof(ofn);
+				ofn.hwndOwner = m_hWnd;
+				ofn.lpstrFilter = "Wavefront OBJ 3D Model (*.obj)\0*.obj\0All Files (*.*)\0*.*\0";
+				ofn.lpstrFile = szFilePath;
+				ofn.nMaxFile = sizeof(szFilePath);
+				ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
+				ofn.lpstrDefExt = "obj";
+				ofn.lpstrTitle = "Export Scene to Wavefront OBJ";
+
+				if (GetSaveFileNameA(&ofn))
+				{
+					if (m_pWorld->GetScene()->ExportToOBJ(szFilePath))
+					{
+						Utils::ODS("[UI] Scene successfully exported to OBJ: %s", szFilePath);
+						MessageBoxA(m_hWnd, "Scene exported successfully to OBJ!\nIndividual parts saved to 'ModelsOBJ/' folder.", "Export Complete", MB_OK | MB_ICONINFORMATION);
+					}
+					else
+					{
+						Utils::ODS("[UI_ERROR] Failed to export scene to OBJ: %s", szFilePath);
+					}
+				}
 				});
+			curBtnX += lBtnWidth + lBtnPadding;
 			pSceneWindow->AddChild(pBtnExport);
 
 			// Smart Tree (Scene Outliner)

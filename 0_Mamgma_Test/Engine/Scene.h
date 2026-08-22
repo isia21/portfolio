@@ -38,18 +38,18 @@ public:
 
 public:
 	// --- Properties and state --- 
-	const char* GetName() const { return m_sName.c_str(); }
+	const char* GetName() const { return m_strName.c_str(); }
 	void SetName(const char* pszName);
 
-	const char* GetFilePath() const { return m_sFilePath.c_str(); }
+	const char* GetFilePath() const { return m_strFilePath.c_str(); }
 	void SetFilePath(const char* pszFilePath);
 
 	bool IsModified() const { return m_bModified; }
 	void SetModified(bool bModified) { m_bModified = bModified; }
 
 private:
-	std::string m_sName;
-	std::string m_sFilePath;
+	std::string m_strName;
+	std::string m_strFilePath;
 	bool m_bModified;
 
 	bool m_bStructureChanged;

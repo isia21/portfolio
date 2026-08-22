@@ -433,14 +433,220 @@ void C3DObject::Render()
 //-----------------------------------------------------------------------------
 // Serialization
 //-----------------------------------------------------------------------------
-bool C3DObject::Load()
+bool C3DObject::LoadFromFile(const char* pszFilePath)
 {
-	// XML loading will be implemented later.
-	return false;
+	if (pszFilePath == nullptr || strlen(pszFilePath) == 0)
+		return false;
+
+	pugi::xml_document doc;
+	pugi::xml_parse_result result = doc.load_file(pszFilePath);
+	if (!result)
+	{
+		Utils::ODS("[OBJECT_ERROR] XML Parse Error in '%s': %s", pszFilePath, result.description());
+		return false;
+	}
+
+	pugi::xml_node modelNode = doc.child("CADModel");
+	if (!modelNode)
+		return false;
+
+	m_strName = modelNode.attribute("name").as_string("Loaded Model");
+
+	pugi::xml_node props = modelNode.child("Properties");
+	if (props)
+	{
+		const char* pszColor = props.attribute("color").as_string("0xFFFFFFFF");
+		m_dwModelColor = static_cast<unsigned int>(strtoul(pszColor, nullptr, 0));
+
+		std::string sRenderType = props.attribute("renderType").as_string("Solid");
+		m_eRenderType = (sRenderType == "Wireframe") ? eRT_Wireframe : eRT_Poligon;
+
+		m_bVisible = props.attribute("visible").as_bool(true);
+	}
+
+	pugi::xml_node transform = modelNode.child("Transform");
+	if (transform)
+	{
+		pugi::xml_node pos = transform.child("Position");
+		if (pos)
+			SetPosition(pos.attribute("x").as_float(0.0f), pos.attribute("y").as_float(0.0f), pos.attribute("z").as_float(0.0f));
+
+		pugi::xml_node rot = transform.child("Rotation");
+		if (rot)
+			SetRotation(rot.attribute("x").as_float(0.0f), rot.attribute("y").as_float(0.0f), rot.attribute("z").as_float(0.0f));
+
+		pugi::xml_node scale = transform.child("Scale");
+		if (scale)
+			SetScale(scale.attribute("x").as_float(1.0f), scale.attribute("y").as_float(1.0f), scale.attribute("z").as_float(1.0f));
+	}
+
+	pugi::xml_node geomNode = modelNode.child("Geometry");
+	if (geomNode)
+	{
+		m_vVertices.clear();
+		m_vIndices.clear();
+
+		pugi::xml_node vertsNode = geomNode.child("Vertices");
+		if (vertsNode)
+		{
+			std::stringstream ss(vertsNode.text().as_string());
+			float vx, vy, vz;
+			std::string sColor;
+
+			while (ss >> vx >> vy >> vz >> sColor)
+			{
+				Vertex3D v = {};
+				v.x = vx;
+				v.y = vy;
+				v.z = vz;
+				v.dwColor = static_cast<unsigned int>(strtoul(sColor.c_str(), nullptr, 0));
+				m_vVertices.push_back(v);
+			}
+		}
+
+		pugi::xml_node trisNode = geomNode.child("Triangles");
+		if (trisNode)
+		{
+			std::stringstream ss(trisNode.text().as_string());
+			unsigned int i1, i2, i3;
+
+			while (ss >> i1 >> i2 >> i3)
+			{
+				m_vIndices.push_back(i1);
+				m_vIndices.push_back(i2);
+				m_vIndices.push_back(i3);
+			}
+		}
+	}
+
+	Utils::ODS("[OBJECT] Loaded model '%s' (Verts: %zu, Tris: %zu)", m_strName.c_str(), m_vVertices.size(), m_vIndices.size() / 3);
+	return true;
 }
 
-bool C3DObject::Save()
+bool C3DObject::SaveToFile(const char* pszFilePath)
 {
-	// XML saving will be implemented later.
-	return false;
+	if (pszFilePath == nullptr || strlen(pszFilePath) == 0)
+		return false;
+
+	std::string sPath(pszFilePath);
+	if (sPath.length() >= 4 && sPath.substr(sPath.length() - 4) == ".obj")
+	{
+		return ExportToOBJ(pszFilePath);
+	}
+
+	pugi::xml_document doc;
+
+	// XML Declaration
+	pugi::xml_node decl = doc.prepend_child(pugi::node_declaration);
+	decl.append_attribute("version") = "1.0";
+	decl.append_attribute("encoding") = "UTF-8";
+
+	// Root <CADModel>
+	pugi::xml_node modelNode = doc.append_child("CADModel");
+	modelNode.append_attribute("version") = "1.0";
+	modelNode.append_attribute("name") = m_strName.c_str();
+
+	// --- Properties ---
+	pugi::xml_node props = modelNode.append_child("Properties");
+	char szHexColor[16] = {};
+	sprintf_s(szHexColor, sizeof(szHexColor), "0x%08X", m_dwModelColor);
+	props.append_attribute("color") = szHexColor;
+	props.append_attribute("renderType") = (m_eRenderType == eRT_Wireframe) ? "Wireframe" : "Solid";
+	props.append_attribute("visible") = m_bVisible;
+
+	// --- Transform ---
+	pugi::xml_node transform = modelNode.append_child("Transform");
+
+	pugi::xml_node pos = transform.append_child("Position");
+	pos.append_attribute("x") = m_vPosition.x;
+	pos.append_attribute("y") = m_vPosition.y;
+	pos.append_attribute("z") = m_vPosition.z;
+
+	pugi::xml_node rot = transform.append_child("Rotation");
+	rot.append_attribute("x") = m_vRotation.x;
+	rot.append_attribute("y") = m_vRotation.y;
+	rot.append_attribute("z") = m_vRotation.z;
+
+	pugi::xml_node scale = transform.append_child("Scale");
+	scale.append_attribute("x") = m_vScale.x;
+	scale.append_attribute("y") = m_vScale.y;
+	scale.append_attribute("z") = m_vScale.z;
+
+	// --- Geometry ---
+	pugi::xml_node geomNode = modelNode.append_child("Geometry");
+	geomNode.append_attribute("verticesCount") = static_cast<unsigned int>(m_vVertices.size());
+	geomNode.append_attribute("trianglesCount") = static_cast<unsigned int>(m_vIndices.size() / 3);
+
+
+	// --- Vertex array---
+	std::stringstream ssVerts;
+	ssVerts << std::fixed << std::setprecision(4);
+	for (const Vertex3D& v : m_vVertices)
+	{
+		char szColor[16] = {};
+		sprintf_s(szColor, sizeof(szColor), "0x%08X", v.dwColor);
+		ssVerts << "\n                " << v.x << " " << v.y << " " << v.z << " " << szColor;
+	}
+	ssVerts << "\n            ";
+	geomNode.append_child("Vertices").text().set(ssVerts.str().c_str());
+
+	// --- Tres array ---
+	std::stringstream ssTris;
+	for (size_t i = 0; i < m_vIndices.size(); i += 3)
+	{
+		if (i + 2 < m_vIndices.size())
+		{
+			ssTris << "\n                "
+				<< m_vIndices[i] << " "
+				<< m_vIndices[i + 1] << " "
+				<< m_vIndices[i + 2];
+		}
+	}
+	ssTris << "\n            ";
+	geomNode.append_child("Triangles").text().set(ssTris.str().c_str());
+
+	const bool bSuccess = doc.save_file(pszFilePath, "    ", pugi::format_default | pugi::format_indent);
+	if (bSuccess)
+		Utils::ODS("[OBJECT] Saved CAD Model '%s' to: %s", m_strName.c_str(), pszFilePath);
+	else
+		Utils::ODS("[OBJECT_ERROR] Failed to save CAD Model to: %s", pszFilePath);
+
+	return bSuccess;
+}
+
+bool C3DObject::ExportToOBJ(const char* pszFilePath)
+{
+	if (pszFilePath == nullptr || strlen(pszFilePath) == 0)
+		return false;
+
+	std::ofstream file(pszFilePath, std::ios::out | std::ios::trunc);
+	if (!file.is_open())
+		return false;
+
+	file << "# Wavefront OBJ exported by MeshCut Studio\n";
+	file << "o " << (m_strName.empty() ? "Model" : m_strName) << "\n\n";
+
+	file << std::fixed << std::setprecision(6);
+
+	for (const Vertex3D& v : m_vVertices)
+	{
+		file << "v " << v.x << " " << v.y << " " << v.z << "\n";
+	}
+
+	file << "\n";
+
+	for (size_t i = 0; i < m_vIndices.size(); i += 3)
+	{
+		if (i + 2 < m_vIndices.size())
+		{
+			file << "f "
+				<< (m_vIndices[i] + 1) << " "
+				<< (m_vIndices[i + 1] + 1) << " "
+				<< (m_vIndices[i + 2] + 1) << "\n";
+		}
+	}
+
+	file.close();
+	Utils::ODS("[OBJECT] Exported Wavefront OBJ mesh '%s' to: %s", m_strName.c_str(), pszFilePath);
+	return true;
 }
