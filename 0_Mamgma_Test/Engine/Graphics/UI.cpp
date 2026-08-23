@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Renderer.h"
 #include "UI.h"
-
+#include "../Input.h"
 //-----------------------------------------------------------------------------
 // CUIManager
 //-----------------------------------------------------------------------------
@@ -46,6 +46,17 @@ void CUIManager::Clear()
 	m_vElements.clear();
 }
 
+void CUIManager::Update()
+{
+	for (auto it = m_vElements.rbegin(); it != m_vElements.rend(); ++it)
+	{
+		if ((*it) != nullptr && (*it)->IsVisible() && (*it)->IsEnabled())
+		{
+			(*it)->Update();
+		}
+	}
+}
+
 void CUIManager::Render(CRenderer* pRenderer)
 {
 	if (pRenderer == nullptr)
@@ -60,70 +71,6 @@ void CUIManager::Render(CRenderer* pRenderer)
 	}
 }
 
-bool CUIManager::ProcessMouseMove(int lMouseX, int lMouseY)
-{
-	bool bHandled = false;
-
-	for (CUIElement* pElement : m_vElements)
-	{
-		if (pElement != nullptr && pElement->IsVisible() && pElement->IsEnabled())
-		{
-			if (pElement->OnMouseMove(lMouseX, lMouseY))
-			{
-				bHandled = true;
-			}
-		}
-	}
-
-	return bHandled;
-}
-
-bool CUIManager::ProcessMouseDown(int lMouseX, int lMouseY, int lButton)
-{
-	for (auto it = m_vElements.rbegin(); it != m_vElements.rend(); ++it)
-	{
-		CUIElement* pElement = *it;
-		if (pElement != nullptr && pElement->IsVisible() && pElement->IsEnabled())
-		{
-			if (pElement->OnMouseDown(lMouseX, lMouseY, lButton))
-				return true; 
-		}
-	}
-
-	return false;
-}
-
-bool CUIManager::ProcessMouseUp(int lMouseX, int lMouseY, int lButton)
-{
-	bool bHandled = false;
-
-	for (auto it = m_vElements.rbegin(); it != m_vElements.rend(); ++it)
-	{
-		CUIElement* pElement = *it;
-		if (pElement != nullptr && pElement->IsVisible() && pElement->IsEnabled())
-		{
-			if (pElement->OnMouseUp(lMouseX, lMouseY, lButton))
-			{
-				bHandled = true;
-			}
-		}
-	}
-
-	return bHandled;
-}
-
-bool CUIManager::ProcessMouseWheel(int lMouseX, int lMouseY, int zDelta)
-{
-	for (auto it = m_vElements.rbegin(); it != m_vElements.rend(); ++it)
-	{
-		if ((*it)->IsVisible() && (*it)->IsEnabled())
-		{
-			if ((*it)->OnMouseWheel(lMouseX, lMouseY, zDelta))
-				return true;
-		}
-	}
-	return false;
-}
 //-----------------------------------------------------------------------------
 // CUIElement
 //-----------------------------------------------------------------------------
@@ -146,53 +93,6 @@ bool CUIElement::IsPointInside(int lX, int lY) const
 
 	return (lX >= absX && lX <= (absX + m_lWidth) &&
 		lY >= absY && lY <= (absY + m_lHeight));
-}
-
-bool CUIElement::OnMouseMove(int lMouseX, int lMouseY)
-{
-	if (!m_bVisible || !m_bEnabled)
-	{
-		m_bHovered = false;
-		m_bPressed = false;
-		return false;
-	}
-
-	m_bHovered = IsPointInside(lMouseX, lMouseY);
-
-	if (!m_bHovered)
-		m_bPressed = false;
-
-	return m_bHovered;
-}
-
-bool CUIElement::OnMouseDown(int lMouseX, int lMouseY, int lButton)
-{
-	if (!m_bVisible || !m_bEnabled)
-		return false;
-
-	if (lButton == 0 && IsPointInside(lMouseX, lMouseY)) // 0 = Left Mouse Button
-	{
-		m_bPressed = true;
-		return true;
-	}
-
-	return false;
-}
-
-bool CUIElement::OnMouseUp(int lMouseX, int lMouseY, int lButton)
-{
-	if (!m_bVisible || !m_bEnabled)
-		return false;
-
-	const bool bWasPressed = m_bPressed;
-	m_bPressed = false;
-
-	if (lButton == 0 && bWasPressed && IsPointInside(lMouseX, lMouseY))
-	{
-		return true;
-	}
-
-	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -279,6 +179,38 @@ CUIButton::CUIButton(
 	, m_fnOnClick(fnCallback)
 {}
 
+void CUIButton::Update()
+{
+	CMouse* pMouse = CMouse::GetInstance();
+	m_bHovered = IsPointInside(pMouse->GetX(), pMouse->GetY());
+
+	if (m_bPressed)
+	{
+		// --- If phys btn unpressed ---
+		if (!pMouse->IsButtonDownRaw(CMouse::Button_Left))
+		{
+			m_bPressed = false;
+
+			// register click 
+			if (m_bHovered && m_fnOnClick)
+				m_fnOnClick();
+
+			pMouse->ConsumeButton(CMouse::Button_Left);
+		}
+		// --- Until we press mouse btn over UI Button - reset m.Button.state (world must ignore this pressed state)
+		else
+			pMouse->ConsumeButton(CMouse::Button_Left);
+	}
+	else
+	{
+		// --- Catch moment of start press btn ---
+		if (m_bHovered && pMouse->IsButtonPressed(CMouse::Button_Left))
+		{
+			m_bPressed = true;
+			pMouse->ConsumeButton(CMouse::Button_Left);
+		}
+	}
+}
 void CUIButton::Render(CRenderer* pRenderer)
 {
 	if (!m_bVisible || pRenderer == nullptr)
@@ -303,31 +235,6 @@ void CUIButton::Render(CRenderer* pRenderer)
 
 	CUITextBox::Render(pRenderer);
 }
-
-bool CUIButton::OnMouseMove(int lMouseX, int lMouseY)
-{
-	return CUIElement::OnMouseMove(lMouseX, lMouseY);
-}
-
-bool CUIButton::OnMouseDown(int lMouseX, int lMouseY, int lButton)
-{
-	return CUIElement::OnMouseDown(lMouseX, lMouseY, lButton);
-}
-
-bool CUIButton::OnMouseUp(int lMouseX, int lMouseY, int lButton)
-{
-	if (CUIElement::OnMouseUp(lMouseX, lMouseY, lButton))
-	{
-		if (m_fnOnClick != nullptr)
-		{
-			m_fnOnClick();
-		}
-		return true;
-	}
-
-	return false;
-}
-
 
 //-----------------------------------------------------------------------------
 // CUISmartTree
@@ -421,6 +328,84 @@ void CUISmartTree::FlattenVisibleNodes(SUITreeNode* pNode, int lLevel, int& lCur
 	}
 }
 
+void CUISmartTree::Update()
+{
+	CMouse* pMouse = CMouse::GetInstance();
+	int mx = pMouse->GetX();
+	int my = pMouse->GetY();
+
+	if (!IsPointInside(mx, my))
+	{
+		m_pHoveredNode = nullptr;
+		return;
+	}
+
+	const int absX = GetAbsoluteX();
+	const int absY = GetAbsoluteY();
+
+	std::vector<SFlatItem> vFlatNodes;
+	int lCurrentY = 0;
+	for (SUITreeNode* pRoot : m_vRoots)
+		FlattenVisibleNodes(pRoot, 0, lCurrentY, vFlatNodes);
+
+	// --- 1. Find Hovered elem ---
+	m_pHoveredNode = nullptr;
+	for (const SFlatItem& item : vFlatNodes)
+	{
+		int itemTopY = absY + item.lItemY - m_lScrollY;
+		if (my >= itemTopY && my < (itemTopY + m_lItemHeight))
+		{
+			m_pHoveredNode = item.pNode;
+			break;
+		}
+	}
+
+	// --- 2. Process click --- 
+	if (pMouse->IsButtonPressed(CMouse::Button_Left))
+	{
+		if (m_pHoveredNode != nullptr)
+		{
+			// --- Find elem for get Level and calac offsets ---
+			for (const SFlatItem& item : vFlatNodes)
+			{
+				if (item.pNode == m_pHoveredNode)
+				{
+					int curX = absX + 4 + (item.lLevel * m_lIndentSize);
+
+					// --- Click on [+/-]
+					if (!item.pNode->vChildren.empty() && mx >= curX && mx < (curX + 12))
+					{
+						item.pNode->bExpanded = !item.pNode->bExpanded;
+					}
+					// ---  Click on [V/.]
+					else if (mx >= curX + 12 && mx < curX + 34)
+					{
+						item.pNode->bObjectVisible = !item.pNode->bObjectVisible; 
+						if (m_fnOnToggleVisibility)
+							m_fnOnToggleVisibility(item.pNode, item.pNode->bObjectVisible);
+					}
+					// --- Click on Text of item
+					else
+					{
+						SetSelectedNode(item.pNode); 
+					}
+					break;
+				}
+			}
+		}
+		pMouse->ConsumeButton(CMouse::Button_Left);
+	}
+
+	// --- 3. Scroll processing
+	int zDelta = pMouse->GetWheelDelta();
+	if (zDelta != 0)
+	{
+		m_lScrollY -= (zDelta / 120) * (m_lItemHeight * 2);
+		if (m_lScrollY < 0) m_lScrollY = 0;
+		pMouse->ConsumeWheel();
+	}
+}
+
 void CUISmartTree::Render(CRenderer* pRenderer)
 {
 	if (!m_bVisible || pRenderer == nullptr)
@@ -430,38 +415,28 @@ void CUISmartTree::Render(CRenderer* pRenderer)
 	const int absY = GetAbsoluteY();
 
 	if ((m_dwBgColor & 0xFF) > 0)
-	{
 		pRenderer->DrawRect(absX, absY, m_lWidth, m_lHeight, m_dwBgColor);
-	}
 
 	
 	std::vector<SFlatItem> vFlatNodes;
 	int lCurrentY = 0;
 	for (SUITreeNode* pRoot : m_vRoots)
-	{
 		FlattenVisibleNodes(pRoot, 0, lCurrentY, vFlatNodes);
-	}
 
 	
 	for (const SFlatItem& item : vFlatNodes)
 	{
 		const int itemTopY = absY + item.lItemY - m_lScrollY;
 
-
 		if (itemTopY + m_lItemHeight <= absY || itemTopY >= absY + m_lHeight)
 			continue;
 
 		SUITreeNode* pNode = item.pNode;
 
-
 		if (pNode->bSelected)
-		{
 			pRenderer->DrawRect(absX, itemTopY, m_lWidth, m_lItemHeight, m_dwSelectedBgColor);
-		}
 		else if (pNode == m_pHoveredNode)
-		{
 			pRenderer->DrawRect(absX, itemTopY, m_lWidth, m_lItemHeight, m_dwHoverBgColor);
-		}
 
 
 		int curX = absX + 4 + (item.lLevel * m_lIndentSize);
@@ -485,109 +460,6 @@ void CUISmartTree::Render(CRenderer* pRenderer)
 		const unsigned int dwFinalTextColor = pNode->bObjectVisible ? m_dwTextColor : 0x777777FF;
 		pRenderer->DrawText(curX, textBaselineY, pNode->sText.c_str(), dwFinalTextColor, m_lFontSize, TEXT_ALIGN_LEFT);
 	}
-}
-
-bool CUISmartTree::OnMouseMove(int lMouseX, int lMouseY)
-{
-	if (!m_bVisible || !m_bEnabled)
-		return false;
-
-	if (!IsPointInside(lMouseX, lMouseY))
-	{
-		m_pHoveredNode = nullptr;
-		return false;
-	}
-
-	const int absY = GetAbsoluteY();
-	std::vector<SFlatItem> vFlatNodes;
-	int lCurrentY = 0;
-	for (SUITreeNode* pRoot : m_vRoots)
-		FlattenVisibleNodes(pRoot, 0, lCurrentY, vFlatNodes);
-
-	m_pHoveredNode = nullptr;
-	for (const SFlatItem& item : vFlatNodes)
-	{
-		const int itemTopY = absY + item.lItemY - m_lScrollY;
-		if (lMouseY >= itemTopY && lMouseY < (itemTopY + m_lItemHeight))
-		{
-			m_pHoveredNode = item.pNode;
-			break;
-		}
-	}
-
-	return true;
-}
-
-bool CUISmartTree::OnMouseDown(int lMouseX, int lMouseY, int lButton)
-{
-	if (!m_bVisible || !m_bEnabled)
-		return false;
-
-	if (!IsPointInside(lMouseX, lMouseY))
-		return false;
-
-	if (lButton == 0)
-	{
-		const int absX = GetAbsoluteX();
-		const int absY = GetAbsoluteY();
-
-		std::vector<SFlatItem> vFlatNodes;
-		int lCurrentY = 0;
-		for (SUITreeNode* pRoot : m_vRoots)
-			FlattenVisibleNodes(pRoot, 0, lCurrentY, vFlatNodes);
-
-		for (const SFlatItem& item : vFlatNodes)
-		{
-			const int itemTopY = absY + item.lItemY - m_lScrollY;
-			if (lMouseY >= itemTopY && lMouseY < (itemTopY + m_lItemHeight))
-			{
-				SUITreeNode* pNode = item.pNode;
-				int curX = absX + 4 + (item.lLevel * m_lIndentSize);
-
-				// --- click on the expand/collapse icon [+] / [-] ---
-				if (!pNode->vChildren.empty() && lMouseX >= curX && lMouseX < (curX + 12))
-				{
-					pNode->bExpanded = !pNode->bExpanded;
-					return true;
-				}
-				curX += 12;
-
-				// --- click on the visibility icon [V] / [.] ---
-				if (lMouseX >= curX && lMouseX < (curX + 22))
-				{
-					pNode->bObjectVisible = !pNode->bObjectVisible;
-					if (m_fnOnToggleVisibility != nullptr)
-						m_fnOnToggleVisibility(pNode, pNode->bObjectVisible);
-					return true;
-				}
-
-				// --- click on the node text area ---
-				SetSelectedNode(pNode);
-				return true;
-			}
-		}
-	}
-
-	return true;
-}
-
-bool CUISmartTree::OnMouseUp(int lMouseX, int lMouseY, int lButton)
-{
-	return IsPointInside(lMouseX, lMouseY);
-}
-
-bool CUISmartTree::OnMouseWheel(int lMouseX, int lMouseY, int zDelta)
-{
-	if (!m_bVisible || !m_bEnabled || !IsPointInside(lMouseX, lMouseY))
-		return false;
-
-	// --- Scroll for 2 lines/items per WHEEL_DELTA
-	m_lScrollY -= (zDelta / WHEEL_DELTA) * (m_lItemHeight * 2);
-
-	if (m_lScrollY < 0)
-		m_lScrollY = 0;
-
-	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -695,10 +567,68 @@ void CUIWindow::RemoveChild(CUIElement* pChild)
 void CUIWindow::ClearChildren()
 {
 	for (CUIElement* pChild : m_vChildren)
-	{
 		delete pChild;
-	}
+
 	m_vChildren.clear();
+}
+
+void CUIWindow::Update()
+{
+	CMouse* pMouse = CMouse::GetInstance();
+	int mx = pMouse->GetX();
+	int my = pMouse->GetY();
+
+	// --- 1. Drag n Drop logic
+	if (m_bDragging)
+	{
+		// --- Check RAW State of btn, cause we dont care, will State Consumed (WE own State) ---
+		if (pMouse->IsButtonDownRaw(CMouse::Button_Left))
+		{
+			m_lX = mx - m_lDragOffsetX;
+			m_lY = my - m_lDragOffsetY;
+			pMouse->ConsumeButton(CMouse::Button_Left); 
+		}
+		else
+			m_bDragging = false;
+	}
+
+	// --- 2. Process child elems ---
+	if (!m_bCollapsed)
+	{
+		for (auto it = m_vChildren.rbegin(); it != m_vChildren.rend(); ++it)
+		{
+			if ((*it) != nullptr && (*it)->IsVisible() && (*it)->IsEnabled())
+				(*it)->Update();
+		}
+	}
+
+	if (m_pBtnCollapse) 
+		m_pBtnCollapse->Update();
+
+	// --- 3. Window rect ---
+	bool bInsideHeader = IsPointInsideHeader(mx, my);
+	bool bInsideBody = m_bCollapsed ? bInsideHeader : IsPointInside(mx, my);
+	m_bHovered = bInsideBody;
+
+	// Drag n Drop start 
+	if (!m_bDragging && bInsideHeader && pMouse->IsButtonPressed(CMouse::Button_Left))
+	{
+		m_bDragging = true;
+		m_lDragOffsetX = mx - m_lX;
+		m_lDragOffsetY = my - m_lY;
+		pMouse->ConsumeButton(CMouse::Button_Left);
+	}
+
+	// --- 4. Reset any mouse states if Cursor Point inside Window Rect
+	if (bInsideBody)
+	{
+		if (pMouse->IsButtonPressed(CMouse::Button_Left)) 
+			pMouse->ConsumeButton(CMouse::Button_Left);
+		if (pMouse->IsButtonPressed(CMouse::Button_Right)) 
+			pMouse->ConsumeButton(CMouse::Button_Right);
+		if (pMouse->GetWheelDelta() != 0) 
+			pMouse->ConsumeWheel();
+	}
 }
 
 void CUIWindow::Render(CRenderer* pRenderer)
@@ -712,15 +642,11 @@ void CUIWindow::Render(CRenderer* pRenderer)
 
 	// --- Draw the window background (only if not collapsed and has a visible background color) ---
 	if (!m_bCollapsed && (m_dwBgColor & 0xFF) > 0)
-	{
 		pRenderer->DrawRect(absX, absY, m_lWidth, effectiveHeight, m_dwBgColor);
-	}
 
 	// --- Draw the header background (only if has a visible header color) ---
 	if ((m_dwHeaderColor & 0xFF) > 0)
-	{
 		pRenderer->DrawRect(absX, absY, m_lWidth, m_lHeaderHeight, m_dwHeaderColor);
-	}
 
 	// --- Draw the window title text (if not empty) ---
 	if (!m_szTitle.empty())
@@ -731,9 +657,7 @@ void CUIWindow::Render(CRenderer* pRenderer)
 
 	// --- Draw the collapse/expand button ---
 	if (m_pBtnCollapse != nullptr)
-	{
 		m_pBtnCollapse->Render(pRenderer);
-	}
 
 	// --- Draw child elements (only if the window is NOT collapsed) ---
 	if (!m_bCollapsed)
@@ -748,9 +672,7 @@ void CUIWindow::Render(CRenderer* pRenderer)
 
 		// --- Draw a separator line between the header and the content (only if border size is greater than 0 and border color is visible) ---
 		if (m_lBorderSize > 0 && (m_dwBorderColor & 0xFF) > 0)
-		{
 			pRenderer->DrawRect(absX, absY + m_lHeaderHeight, m_lWidth, m_lBorderSize, m_dwBorderColor);
-		}
 	}
 
 	// --- Draw the border around the window (only if border size is greater than 0 and border color is visible) ---
@@ -761,112 +683,4 @@ void CUIWindow::Render(CRenderer* pRenderer)
 		pRenderer->DrawRect(absX, absY, m_lBorderSize, effectiveHeight, m_dwBorderColor);
 		pRenderer->DrawRect(absX + m_lWidth - m_lBorderSize, absY, m_lBorderSize, effectiveHeight, m_dwBorderColor);
 	}
-}
-
-bool CUIWindow::OnMouseMove(int lMouseX, int lMouseY)
-{
-	if (!m_bVisible || !m_bEnabled)
-		return false;
-
-	// --- Process Drag & Drop window movement ---
-	if (m_bDragging)
-	{
-		m_lX = lMouseX - m_lDragOffsetX;
-		m_lY = lMouseY - m_lDragOffsetY;
-		return true;
-	}
-
-	// --- Process the collapse/expand button ---
-	if (m_pBtnCollapse != nullptr)
-		m_pBtnCollapse->OnMouseMove(lMouseX, lMouseY);
-
-	// --- Process child elements (only if the window is NOT collapsed) ---
-	bool bChildHandled = false;
-	if (!m_bCollapsed)
-	{
-		for (CUIElement* pChild : m_vChildren)
-		{
-			if (pChild != nullptr && pChild->IsVisible() && pChild->IsEnabled())
-			{
-				if (pChild->OnMouseMove(lMouseX, lMouseY))
-					bChildHandled = true;
-			}
-		}
-	}
-
-	const bool bInside = m_bCollapsed ? IsPointInsideHeader(lMouseX, lMouseY) : IsPointInside(lMouseX, lMouseY);
-	m_bHovered = bInside;
-
-	return bChildHandled || bInside;
-}
-
-bool CUIWindow::OnMouseDown(int lMouseX, int lMouseY, int lButton)
-{
-	if (!m_bVisible || !m_bEnabled)
-		return false;
-
-	// --- check if the collapse/expand button was clicked ---
-	if (m_pBtnCollapse != nullptr && m_pBtnCollapse->OnMouseDown(lMouseX, lMouseY, lButton))
-		return true;
-
-	// --- check child elements (only if the window is NOT collapsed) ---
-	if (!m_bCollapsed)
-	{
-		for (auto it = m_vChildren.rbegin(); it != m_vChildren.rend(); ++it)
-		{
-			CUIElement* pChild = *it;
-			if (pChild != nullptr && pChild->IsVisible() && pChild->IsEnabled())
-			{
-				if (pChild->OnMouseDown(lMouseX, lMouseY, lButton))
-					return true;
-			}
-		}
-	}
-
-	// --- Catch Drag & Drop when clicking on the header ---
-	if (lButton == 0 && IsPointInsideHeader(lMouseX, lMouseY))
-	{
-		m_bDragging = true;
-		m_lDragOffsetX = lMouseX - m_lX;
-		m_lDragOffsetY = lMouseY - m_lY;
-		return true;
-	}
-
-	// --- Absorb clicks on the window body to prevent clicking through to the 3D world beneath it ---
-	const bool bInside = m_bCollapsed ? IsPointInsideHeader(lMouseX, lMouseY) : IsPointInside(lMouseX, lMouseY);
-	return bInside;
-}
-
-bool CUIWindow::OnMouseUp(int lMouseX, int lMouseY, int lButton)
-{
-	m_bDragging = false;
-
-	if (m_pBtnCollapse != nullptr)
-		m_pBtnCollapse->OnMouseUp(lMouseX, lMouseY, lButton);
-
-	if (!m_bCollapsed)
-	{
-		for (auto it = m_vChildren.rbegin(); it != m_vChildren.rend(); ++it)
-		{
-			CUIElement* pChild = *it;
-			if (pChild != nullptr && pChild->IsVisible() && pChild->IsEnabled())
-			{
-				pChild->OnMouseUp(lMouseX, lMouseY, lButton);
-			}
-		}
-	}
-
-	return false;
-}
-bool CUIWindow::OnMouseWheel(int lMouseX, int lMouseY, int zDelta)
-{
-	if (!m_bVisible || !m_bEnabled || m_bCollapsed)
-		return false;
-
-	for (auto it = m_vChildren.rbegin(); it != m_vChildren.rend(); ++it)
-	{
-		if ((*it)->OnMouseWheel(lMouseX, lMouseY, zDelta))
-			return true;
-	}
-	return false;
 }

@@ -15,13 +15,14 @@ public:
 	virtual ~CUIElement() = default;
 
 public:
+	virtual void Update() {};
 	virtual void Render(CRenderer* pRenderer) = 0;
 
-	// Mouse event handlers (return true if event was consumed by element)
-	virtual bool OnMouseMove(int lMouseX, int lMouseY);
-	virtual bool OnMouseDown(int lMouseX, int lMouseY, int lButton);
-	virtual bool OnMouseUp(int lMouseX, int lMouseY, int lButton);
-	virtual bool OnMouseWheel(int lMouseX, int lMouseY, int zDelta) { return false; }
+	//	// Mouse event handlers (return true if event was consumed by element)
+	//	virtual bool OnMouseMove(int lMouseX, int lMouseY);
+	//	virtual bool OnMouseDown(int lMouseX, int lMouseY, int lButton);
+	//	virtual bool OnMouseUp(int lMouseX, int lMouseY, int lButton);
+	//	virtual bool OnMouseWheel(int lMouseX, int lMouseY, int zDelta) { return false; }
 public:
 	void SetPosition(int lX, int lY) { m_lX = lX; m_lY = lY; }
 	void SetSize(int lWidth, int lHeight) { m_lWidth = lWidth; m_lHeight = lHeight; }
@@ -127,11 +128,12 @@ public:
 	virtual ~CUIButton() override = default;
 
 public:
+	virtual void Update() override;
 	virtual void Render(CRenderer* pRenderer) override;
 
-	virtual bool OnMouseMove(int lMouseX, int lMouseY) override;
-	virtual bool OnMouseDown(int lMouseX, int lMouseY, int lButton) override;
-	virtual bool OnMouseUp(int lMouseX, int lMouseY, int lButton) override;
+	//	virtual bool OnMouseMove(int lMouseX, int lMouseY) override;
+	//	virtual bool OnMouseDown(int lMouseX, int lMouseY, int lButton) override;
+	//	virtual bool OnMouseUp(int lMouseX, int lMouseY, int lButton) override;
 
 public:
 	void SetOnClick(UIEventCallback pfnCallback) { m_fnOnClick = pfnCallback; }
@@ -208,12 +210,13 @@ public:
 	virtual ~CUISmartTree() override;
 
 public:
+	virtual void Update() override;
 	virtual void Render(CRenderer* pRenderer) override;
 
-	virtual bool OnMouseMove(int lMouseX, int lMouseY) override;
-	virtual bool OnMouseDown(int lMouseX, int lMouseY, int lButton) override;
-	virtual bool OnMouseUp(int lMouseX, int lMouseY, int lButton) override;
-	virtual bool OnMouseWheel(int lMouseX, int lMouseY, int zDelta) override;
+	//	virtual bool OnMouseMove(int lMouseX, int lMouseY) override;
+	//	virtual bool OnMouseDown(int lMouseX, int lMouseY, int lButton) override;
+	//	virtual bool OnMouseUp(int lMouseX, int lMouseY, int lButton) override;
+	//	virtual bool OnMouseWheel(int lMouseX, int lMouseY, int zDelta) override;
 
 public:
 	SUITreeNode* AddRoot(const char* pszText, void* pUserData = nullptr);
@@ -279,12 +282,13 @@ public:
 	virtual ~CUIWindow() override;
 
 public:
+	virtual void Update() override;
 	virtual void Render(CRenderer* pRenderer) override;
 
-	virtual bool OnMouseMove(int lMouseX, int lMouseY) override;
-	virtual bool OnMouseDown(int lMouseX, int lMouseY, int lButton) override;
-	virtual bool OnMouseUp(int lMouseX, int lMouseY, int lButton) override;
-	virtual bool OnMouseWheel(int lMouseX, int lMouseY, int zDelta) override;
+	//	virtual bool OnMouseMove(int lMouseX, int lMouseY) override;
+	//	virtual bool OnMouseDown(int lMouseX, int lMouseY, int lButton) override;
+	//	virtual bool OnMouseUp(int lMouseX, int lMouseY, int lButton) override;
+	//	virtual bool OnMouseWheel(int lMouseX, int lMouseY, int zDelta) override;
 public:
 	void AddChild(CUIElement* pChild);
 	void RemoveChild(CUIElement* pChild);
@@ -340,13 +344,14 @@ public:
 	void RemoveElement(CUIElement* pElement);
 	void Clear();
 
+	void Update();
 	void Render(CRenderer* pRenderer);
 
-	// --- Dispatchers for Win32 Messages (WM_MOUSEMOVE, WM_LBUTTONDOWN, WM_LBUTTONUP) ---
-	bool ProcessMouseMove(int lMouseX, int lMouseY);
-	bool ProcessMouseDown(int lMouseX, int lMouseY, int lButton = 0);
-	bool ProcessMouseUp(int lMouseX, int lMouseY, int lButton = 0);
-	bool ProcessMouseWheel(int lMouseX, int lMouseY, int zDelta);
+	//	// --- Dispatchers for Win32 Messages (WM_MOUSEMOVE, WM_LBUTTONDOWN, WM_LBUTTONUP) ---
+	//	bool ProcessMouseMove(int lMouseX, int lMouseY);
+	//	bool ProcessMouseDown(int lMouseX, int lMouseY, int lButton = 0);
+	//	bool ProcessMouseUp(int lMouseX, int lMouseY, int lButton = 0);
+	//	bool ProcessMouseWheel(int lMouseX, int lMouseY, int zDelta);
 
 private:
 	std::vector<CUIElement*> m_vElements;

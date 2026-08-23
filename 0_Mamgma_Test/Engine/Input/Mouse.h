@@ -28,6 +28,8 @@ public:
 	bool IsButtonDown(EMouseButton button) const;
 	bool IsButtonPressed(EMouseButton button) const;
 	bool IsButtonReleased(EMouseButton button) const;
+	// --- Raw Mouse State (Consume ignore) ---
+	bool IsButtonDownRaw(EMouseButton button) const;
 
 	// --- Get Mouse Pos (Cur n Delta) ---
 	int GetX() const { return m_lX; }
@@ -36,11 +38,19 @@ public:
 	int GetDeltaY() const { return m_lDeltaY; }
 
 	// --- Get Mouse Wheel Delta (will reset per frame) ---
-	int GetWheelDelta() const { return m_lWheelDelta; }
+	int GetWheelDelta() const;
 
+	// --- Deactive states by request --
+	// in case if user click/do staff in UI we reset values 
+	// cause instead we get double trigger: UI process click and World process same click
+	void ConsumeButton(EMouseButton button);
+	void ConsumeWheel();
 private:
 	bool m_bCurrentState[Button_Count];
 	bool m_bPreviousState[Button_Count];
+
+	bool m_bConsumed[Button_Count];
+	bool m_bWheelConsumed;
 
 	int m_lX;
 	int m_lY;

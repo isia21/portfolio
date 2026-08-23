@@ -27,7 +27,11 @@ void CMouse::Update()
 {
 	// --- 1. Copy cur state as prev state ---
 	for (int i = 0; i < Button_Count; ++i)
+	{
 		m_bPreviousState[i] = m_bCurrentState[i];
+		m_bConsumed[i] = false;
+	}
+	m_bWheelConsumed = false;
 
 	// --- 2. Calc mouse pos delta ---
 	m_lDeltaX = m_lX - m_lPreviousX;
@@ -78,20 +82,51 @@ void CMouse::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam)
 	}
 }
 
-bool CMouse::IsButtonDown(EMouseButton button) const
+bool CMouse::IsButtonDown(EMouseButton button) const 
 {
-	if (button < 0 || button >= Button_Count) return false;
+	if (button < 0 || button >= Button_Count) 
+		return false;
+	return m_bCurrentState[button] 
+		&& !m_bConsumed[button];
+}
+
+bool CMouse::IsButtonPressed(EMouseButton button) const 
+{
+	if (button < 0 || button >= Button_Count) 
+		return false;
+	return 
+		m_bCurrentState[button]
+		&& !m_bPreviousState[button] 
+		&& !m_bConsumed[button];
+}
+
+bool CMouse::IsButtonReleased(EMouseButton button) const 
+{
+	if (button < 0 || button >= Button_Count) 
+		return false;
+	return !m_bCurrentState[button] 
+		&& m_bPreviousState[button] 
+		&& !m_bConsumed[button];
+}
+
+bool CMouse::IsButtonDownRaw(EMouseButton button) const 
+{
+	if (button < 0 || button >= Button_Count) 
+		return false;
 	return m_bCurrentState[button];
 }
 
-bool CMouse::IsButtonPressed(EMouseButton button) const
+void CMouse::ConsumeButton(EMouseButton button)
 {
-	if (button < 0 || button >= Button_Count) return false;
-	return m_bCurrentState[button] && !m_bPreviousState[button];
+	if (button >= 0 && button < Button_Count)
+		m_bConsumed[button] = true;
 }
 
-bool CMouse::IsButtonReleased(EMouseButton button) const
+void CMouse::ConsumeWheel()
 {
-	if (button < 0 || button >= Button_Count) return false;
-	return !m_bCurrentState[button] && m_bPreviousState[button];
+	m_bWheelConsumed = true;
+}
+
+int CMouse::GetWheelDelta() const {
+	return m_bWheelConsumed ? 0 : m_lWheelDelta;
 }

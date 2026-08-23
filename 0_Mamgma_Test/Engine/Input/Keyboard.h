@@ -16,7 +16,6 @@ public:
 	void ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
 	// --- Check Key.State (use VirtualKey - VK_*, like VK_SPACE)
-	
 	/// <summary>
 	/// Is key VK_* was hold | pressed
 	/// </summary>
@@ -36,6 +35,10 @@ public:
 	/// <returns></returns>
 	bool IsKeyReleased(int key) const;  // Клавиша была отпущена именно в этом кадре
 
+	// --- Deactive states by request --
+	// in case if user click/do staff in UI we reset values 
+	// cause instead we get double trigger: UI process click and World process same click
+	void ConsumeKey(int key);
 private:
 	bool m_bCurrentState[256];
 	bool m_bPreviousState[256];

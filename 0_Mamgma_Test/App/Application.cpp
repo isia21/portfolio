@@ -388,6 +388,11 @@ int CApplication::Run()
 
 	while (m_bRunning)
 	{
+
+		// --- Update Input Sys ---
+		if (CKeyboard::GetInstance()) CKeyboard::GetInstance()->Update();
+		if (CMouse::GetInstance()) CMouse::GetInstance()->Update();
+
 		// --- Message pump --- 
 		while (PeekMessage(&message, nullptr, 0, 0, PM_REMOVE))
 		{
@@ -586,8 +591,17 @@ void CApplication::RebuildSceneTree()
 void CApplication::Update()
 {
 	// TODO:
-	//
-	// Input processing
+	// --- Global App HotKey`s ---
+	if (CKeyboard::GetInstance()->IsKeyPressed(VK_ESCAPE))
+	{
+		Shutdown(); // or DestroyWindow(m_hWnd);
+		return;
+	}
+
+	// --- Update UI ---
+	// (can reset input states)
+	if (m_pUIManager != nullptr)
+		m_pUIManager->Update();
 
 	// --- World update ---
 	if (m_pWorld != nullptr)
@@ -712,6 +726,12 @@ LRESULT CALLBACK CApplication::StaticWindowProc(HWND hWnd, UINT message, WPARAM 
 
 LRESULT CApplication::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	// --- Push raw data to Input ---
+	if (CKeyboard::GetInstance()) 
+		CKeyboard::GetInstance()->ProcessMessage(message, wParam, lParam);
+	if (CMouse::GetInstance()) 
+		CMouse::GetInstance()->ProcessMessage(message, wParam, lParam);
+
 	switch (message)
 	{
 	case WM_SIZE:
@@ -732,52 +752,6 @@ LRESULT CApplication::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 	{
 		m_bRunning = false;
 		PostQuitMessage(0);
-		return 0;
-	}
-
-	case WM_KEYDOWN:
-	{
-		if (wParam == VK_ESCAPE)
-			DestroyWindow(hWnd);
-
-		return 0;
-	}
-
-	// --- Mouse Event Processing ---
-	case WM_MOUSEMOVE:
-	{
-		const int mouseX = LOWORD(lParam);
-		const int mouseY = HIWORD(lParam);
-		if (m_pUIManager != nullptr)
-			m_pUIManager->ProcessMouseMove(mouseX, mouseY);
-		return 0;
-	}
-
-	case WM_LBUTTONDOWN:
-	{
-		const int mouseX = LOWORD(lParam);
-		const int mouseY = HIWORD(lParam);
-		if (m_pUIManager != nullptr)
-			m_pUIManager->ProcessMouseDown(mouseX, mouseY, 0);
-		return 0;
-	}
-
-	case WM_LBUTTONUP:
-	{
-		const int mouseX = LOWORD(lParam);
-		const int mouseY = HIWORD(lParam);
-		if (m_pUIManager != nullptr)
-			m_pUIManager->ProcessMouseUp(mouseX, mouseY, 0);
-		return 0;
-	}
-	case WM_MOUSEWHEEL:
-	{
-		POINT pt = { LOWORD(lParam), HIWORD(lParam) };
-		ScreenToClient(hWnd, &pt);
-
-		const int zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
-		if (m_pUIManager != nullptr)
-			m_pUIManager->ProcessMouseWheel(pt.x, pt.y, zDelta);
 		return 0;
 	}
 	default:

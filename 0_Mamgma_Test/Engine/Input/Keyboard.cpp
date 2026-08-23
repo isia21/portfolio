@@ -58,3 +58,10 @@ bool CKeyboard::IsKeyReleased(int key) const
 	if (key < 0 || key > 255) return false;
 	return !m_bCurrentState[key] && m_bPreviousState[key];
 }
+
+void CKeyboard::ConsumeKey(int key)
+{
+	if (key < 0 || key > 255) return;
+	m_bCurrentState[key] = false;
+	m_bPreviousState[key] = false;
+}
