@@ -1,17 +1,12 @@
 #include "stdafx.h"
 #include "Camera.h"
-
+#include "../Input.h"
 
 //-----------------------------------------------------------------------------
 // Constants
 //-----------------------------------------------------------------------------
 namespace
 {
-	const float CAMERA_DEFAULT_ZOOM = 10.0f;
-	const float CAMERA_DEFAULT_ORBIT_SPEED = 0.35f;
-
-	const float CAMERA_DEFAULT_DRUNK_STRENGTH = 2.0f;
-
 	const float CAMERA_MIN_ZOOM = 1.0f;
 	const float CAMERA_MAX_ZOOM = 1000.0f;
 }
@@ -26,20 +21,14 @@ CCamera::CCamera()
 	, m_fTargetZ(0.0f)
 	, m_fPosX(0.0f)
 	, m_fPosY(0.0f)
-	, m_fPosZ(CAMERA_DEFAULT_ZOOM)
-	, m_fZoom(CAMERA_DEFAULT_ZOOM)
-	, m_fOrbitAngle(0.0f)
-	, m_fOrbitSpeed(CAMERA_DEFAULT_ORBIT_SPEED)
-	, m_fDrunkTime(0.0f)
-	, m_fDrunkStrength(CAMERA_DEFAULT_DRUNK_STRENGTH)
-	, m_fDrunkPitch(0.0f)
-	, m_fDrunkYaw(0.0f)
-	, m_fDrunkRoll(0.0f)
+	, m_fPosZ(0.0f)
+	, m_fZoom(15.0f)
+	, m_fPitch(0.5f) // From UP
+	, m_fYaw(0.785f) // By 45deg
 	, m_lViewportWidth(1280)
 	, m_lViewportHeight(720)
-	, m_bDrunkMode(false)
 {
-	UpdateOrbit();
+	UpdatePosition();
 }
 
 CCamera::~CCamera()
@@ -50,55 +39,143 @@ CCamera::~CCamera()
 //-----------------------------------------------------------------------------
 void CCamera::Update(float fDeltaTime)
 {
-	if (fDeltaTime < 0.0f)
-		fDeltaTime = 0.0f;
+	CMouse* pMouse = CMouse::GetInstance();
+	if (!pMouse) return;
 
-	m_fOrbitAngle += m_fOrbitSpeed * fDeltaTime;
-
-	if (m_fOrbitAngle > MATH_PI * 2.0f)
-		m_fOrbitAngle -= MATH_PI * 2.0f;
-
-	m_fDrunkTime += fDeltaTime;
-
-	UpdateDrunkOffset();
-	UpdateOrbit();
-}
-
-//-----------------------------------------------------------------------------
-// Orbit
-//-----------------------------------------------------------------------------
-void CCamera::UpdateOrbit()
-{
-	const float fHorizontalRadius = m_fZoom * std::cos(m_fDrunkPitch);
-	const float fVerticalOffset = m_fZoom * std::sin(m_fDrunkPitch);
-
-	m_fPosX = m_fTargetX + std::sin(m_fOrbitAngle + m_fDrunkYaw) * fHorizontalRadius;
-	m_fPosZ = m_fTargetZ + std::cos(m_fOrbitAngle + m_fDrunkYaw) * fHorizontalRadius;
-	m_fPosY = m_fTargetY + fVerticalOffset;
-}
-
-//-----------------------------------------------------------------------------
-// Drunk camera
-//-----------------------------------------------------------------------------
-void CCamera::UpdateDrunkOffset()
-{
-	if (!m_bDrunkMode)
+	// --- 1. Zoom (scroll by mouse wheel) ---
+	int wheel = pMouse->GetWheelDelta();
+	if (wheel != 0)
 	{
-		m_fDrunkPitch = 0.0f;
-		m_fDrunkYaw = 0.0f;
-		m_fDrunkRoll = 0.0f;
-
-		return;
+		// --- zoom progression/speed
+		float zoomSpeed = m_fZoom * 0.1f;
+		Zoom(wheel > 0 ? -zoomSpeed : zoomSpeed);
 	}
 
-	const float fTime = m_fDrunkTime;
-	m_fDrunkPitch = std::sin(fTime * 1.7f) * 0.12f * m_fDrunkStrength;
-	m_fDrunkYaw = std::sin(fTime * 2.3f) * 0.08f * m_fDrunkStrength;
-	m_fDrunkRoll = std::sin(fTime * 3.1f) * 3.0f * m_fDrunkStrength;
+	// --- 2. Orbit (Rotate: Right Button) ---
+	bool bIsOrbiting = pMouse->IsButtonDown(CMouse::Button_Right);
+	bool bIsShiftDown = CKeyboard::GetInstance()->IsKeyDown(VK_SHIFT);
+
+	if (bIsOrbiting && !bIsShiftDown)
+	{
+		float dx = static_cast<float>(pMouse->GetDeltaX());
+		float dy = static_cast<float>(pMouse->GetDeltaY());
+
+		m_fYaw += dx * 0.005f;
+		m_fPitch += dy * 0.005f;
+
+		// limit +-89deg for pitch (up/down
+		const float pitchLimit = 1.55f;
+		if (m_fPitch > pitchLimit) 
+			m_fPitch = pitchLimit;
+		if (m_fPitch < -pitchLimit) 
+			m_fPitch = -pitchLimit;
+	}
+
+	//	meh. idk. maybe will fine wo ths 	if (pMouse->IsButtonDown(CMouse::Button_Middle) || (bIsOrbiting && bIsShiftDown))
+	//	meh. idk. maybe will fine wo ths 	{
+	//	meh. idk. maybe will fine wo ths 		float dx = static_cast<float>(pMouse->GetDeltaX());
+	//	meh. idk. maybe will fine wo ths 		float dy = static_cast<float>(pMouse->GetDeltaY());
+	//	meh. idk. maybe will fine wo ths 	
+	//	meh. idk. maybe will fine wo ths 		float panSpeed = m_fZoom * 0.0015f;
+	//	meh. idk. maybe will fine wo ths 	
+	//	meh. idk. maybe will fine wo ths 		float yawCos = cosf(m_fYaw);
+	//	meh. idk. maybe will fine wo ths 		float yawSin = sinf(m_fYaw);
+	//	meh. idk. maybe will fine wo ths 		float pitchCos = cosf(m_fPitch);
+	//	meh. idk. maybe will fine wo ths 		float pitchSin = sinf(m_fPitch);
+	//	meh. idk. maybe will fine wo ths 	
+	//	meh. idk. maybe will fine wo ths 		float rightX = yawCos;
+	//	meh. idk. maybe will fine wo ths 		float rightY = 0.0f;
+	//	meh. idk. maybe will fine wo ths 		float rightZ = yawSin;
+	//	meh. idk. maybe will fine wo ths 	
+	//	meh. idk. maybe will fine wo ths 		float upX = -yawSin * pitchSin;
+	//	meh. idk. maybe will fine wo ths 		float upY = pitchCos;
+	//	meh. idk. maybe will fine wo ths 		float upZ = yawCos * pitchSin;
+	//	meh. idk. maybe will fine wo ths 	
+	//	meh. idk. maybe will fine wo ths 		m_fTargetX -= (rightX * dx + upX * dy) * panSpeed;
+	//	meh. idk. maybe will fine wo ths 		m_fTargetY -= (rightY * dx + upY * dy) * panSpeed;
+	//	meh. idk. maybe will fine wo ths 		m_fTargetZ -= (rightZ * dx + upZ * dy) * panSpeed;
+	//	meh. idk. maybe will fine wo ths 	}
+
+	// --- 3. Camera movement (WASD + Shift) ---
+	CKeyboard* pKb = CKeyboard::GetInstance();
+	if (pKb != nullptr)
+	{
+		// Speed camera units per sec
+		float fMoveSpeed = 15.0f * fDeltaTime;
+
+		// Increase speed w Pressed SHIFT
+		if (pKb->IsKeyDown(VK_SHIFT))
+			fMoveSpeed *= 3.0f;
+
+		// Calc view direction vector (forward)
+		float fwdX = sinf(m_fYaw) * cosf(m_fPitch);
+		float fwdY = -sinf(m_fPitch);
+		float fwdZ = -cosf(m_fYaw) * cosf(m_fPitch);
+
+		// calc "Right" perp by camera vector
+		float rightX = cosf(m_fYaw);
+		float rightY = 0.0f;
+		float rightZ = sinf(m_fYaw);
+
+		// cur frame offset
+		float moveX = 0.0f, moveY = 0.0f, moveZ = 0.0f;
+
+		// check move control kb.key by uppercase literal
+		if (pKb->IsKeyDown('W'))
+		{
+			moveX += fwdX; moveY += fwdY; moveZ += fwdZ;
+		}
+		if (pKb->IsKeyDown('S'))
+		{
+			moveX -= fwdX; moveY -= fwdY; moveZ -= fwdZ;
+		}
+		if (pKb->IsKeyDown('D'))
+		{
+			moveX += rightX; moveY += rightY; moveZ += rightZ;
+		}
+		if (pKb->IsKeyDown('A'))
+		{
+			moveX -= rightX; moveY -= rightY; moveZ -= rightZ;
+		}
+
+		// Q n E - movement UP/DOWN by Y
+		if (pKb->IsKeyDown('E')) moveY += 1.0f;
+		if (pKb->IsKeyDown('Q')) moveY -= 1.0f;
+
+		// Norm vector (move speed <= x1.4 limiter diag)
+		float fMoveLenSq = moveX * moveX + moveY * moveY + moveZ * moveZ;
+		if (fMoveLenSq > 0.0001f)
+		{
+			float fInvLen = 1.0f / sqrtf(fMoveLenSq);
+			moveX *= fInvLen;
+			moveY *= fInvLen;
+			moveZ *= fInvLen;
+
+			// move Target pos
+			m_fTargetX += moveX * fMoveSpeed;
+			m_fTargetY += moveY * fMoveSpeed;
+			m_fTargetZ += moveZ * fMoveSpeed;
+		}
+	}
+
+	UpdatePosition();
 }
 
 //-----------------------------------------------------------------------------
-// Target / zoom
+// Camera position | FROM
+//-----------------------------------------------------------------------------
+void CCamera::UpdatePosition()
+{
+	float horizontalDist = m_fZoom * cosf(m_fPitch);
+	float verticalDist = m_fZoom * sinf(m_fPitch);
+
+	m_fPosX = m_fTargetX - horizontalDist * sinf(m_fYaw);
+	m_fPosY = m_fTargetY + verticalDist;
+	m_fPosZ = m_fTargetZ + horizontalDist * cosf(m_fYaw);
+}
+
+//-----------------------------------------------------------------------------
+// Target / zoom | TO / RADIUS
 //-----------------------------------------------------------------------------
 void CCamera::SetTarget(float fX, float fY, float fZ)
 {
@@ -106,20 +183,18 @@ void CCamera::SetTarget(float fX, float fY, float fZ)
 	m_fTargetY = fY;
 	m_fTargetZ = fZ;
 
-	UpdateOrbit();
+	UpdatePosition();
 }
 
 void CCamera::SetZoom(float fZoom)
 {
-	if (fZoom < CAMERA_MIN_ZOOM)
+	if (fZoom < CAMERA_MIN_ZOOM) 
 		fZoom = CAMERA_MIN_ZOOM;
-
-	if (fZoom > CAMERA_MAX_ZOOM)
+	if (fZoom > CAMERA_MAX_ZOOM) 
 		fZoom = CAMERA_MAX_ZOOM;
 
 	m_fZoom = fZoom;
-
-	UpdateOrbit();
+	UpdatePosition();
 }
 
 void CCamera::Zoom(float fDelta)
@@ -139,30 +214,30 @@ void CCamera::SetViewport(int lWidth, int lHeight)
 	m_lViewportHeight = lHeight;
 }
 
-//-----------------------------------------------------------------------------
-// Drunk mode
-//-----------------------------------------------------------------------------
-void CCamera::SetDrunkMode(bool bEnabled)
-{
-	m_bDrunkMode = bEnabled;
-
-	if (!m_bDrunkMode)
-	{
-		m_fDrunkPitch = 0.0f;
-		m_fDrunkYaw = 0.0f;
-		m_fDrunkRoll = 0.0f;
-
-		UpdateOrbit();
-	}
-}
-
-void CCamera::SetDrunkStrength(float fStrength)
-{
-	if (fStrength < 0.0f)
-		fStrength = 0.0f;
-
-	m_fDrunkStrength = fStrength;
-}
+//		//-----------------------------------------------------------------------------
+//		// Drunk mode
+//		//-----------------------------------------------------------------------------
+//		void CCamera::SetDrunkMode(bool bEnabled)
+//		{
+//			m_bDrunkMode = bEnabled;
+//		
+//			if (!m_bDrunkMode)
+//			{
+//				m_fDrunkPitch = 0.0f;
+//				m_fDrunkYaw = 0.0f;
+//				m_fDrunkRoll = 0.0f;
+//		
+//				UpdateOrbit();
+//			}
+//		}
+//		
+//		void CCamera::SetDrunkStrength(float fStrength)
+//		{
+//			if (fStrength < 0.0f)
+//				fStrength = 0.0f;
+//		
+//			m_fDrunkStrength = fStrength;
+//		}
 
 //-----------------------------------------------------------------------------
 // OpenGL matrices
@@ -171,11 +246,15 @@ void CCamera::ApplyView() const
 {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
+	// --- Move back by zoom ---
 	glTranslatef(0.0f, 0.0f, -m_fZoom);
-	glRotatef(m_fDrunkPitch * 57.2957795f, 1.0f, 0.0f, 0.0f);
-	glRotatef(m_fDrunkYaw * 57.2957795f, 0.0f, 1.0f, 0.0f);
-	glRotatef(m_fDrunkRoll, 0.0f, 0.0f, 1.0f);
-	glRotatef(-m_fOrbitAngle * 57.2957795f, 0.0f, 1.0f, 0.0f);
+
+	// --- Rotate camera (as degs converted to rads) ---
+	glRotatef(m_fPitch * MATH_RAD2DEG, 1.0f, 0.0f, 0.0f);
+	glRotatef(m_fYaw * MATH_RAD2DEG, 0.0f, 1.0f, 0.0f);
+
+	// --- Translate world to Focus target ---
 	glTranslatef(-m_fTargetX, -m_fTargetY, -m_fTargetZ);
 }
 

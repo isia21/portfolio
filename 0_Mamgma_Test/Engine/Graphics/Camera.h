@@ -1,4 +1,5 @@
 #pragma once
+
 class CCamera
 {
 public:
@@ -10,13 +11,9 @@ public:
 
 	void SetTarget(float fX, float fY, float fZ);
 	void SetZoom(float fZoom);
-
 	void Zoom(float fDelta);
 
 	void SetViewport(int lWidth, int lHeight);
-
-	void SetDrunkMode(bool bEnabled);
-	void SetDrunkStrength(float fStrength);
 
 	void ApplyView() const;
 	void ApplyProjection() const;
@@ -33,32 +30,25 @@ public:
 	float GetZoom() const { return m_fZoom; }
 
 private:
-	void UpdateOrbit();
-	void UpdateDrunkOffset();
+	void UpdatePosition();
 
 private:
+	// --- Camera look at ---
 	float m_fTargetX;
 	float m_fTargetY;
 	float m_fTargetZ;
 
+	// --- Camera pos ---
 	float m_fPosX;
 	float m_fPosY;
 	float m_fPosZ;
 
 	float m_fZoom;
 
-	float m_fOrbitAngle;
-	float m_fOrbitSpeed;
-
-	float m_fDrunkTime;
-	float m_fDrunkStrength;
-
-	float m_fDrunkPitch;
-	float m_fDrunkYaw;
-	float m_fDrunkRoll;
+	// --- Rotation degs ---
+	float m_fPitch; // Up/Down		(rel X)
+	float m_fYaw;   // Left/Right	(rel Y)
 
 	int m_lViewportWidth;
 	int m_lViewportHeight;
-
-	bool m_bDrunkMode;
 };

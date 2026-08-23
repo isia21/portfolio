@@ -21,3 +21,4 @@ namespace Utils {
 extern const float MATH_PI;			// = 3.14159265358979323846f;
 extern const float MATH_HALF_PI;	// = 3.14159265358979323846f;
 extern const float MATH_DEG2RAD;	// = 3.14159265358979323846f;
+extern const float MATH_RAD2DEG;	// = 3.14159265358979323846f;

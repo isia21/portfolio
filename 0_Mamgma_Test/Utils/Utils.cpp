@@ -4,6 +4,7 @@
 const float MATH_PI			= 3.14159265358979323846f;
 const float MATH_HALF_PI	= MATH_PI / 2.0f;
 const float MATH_DEG2RAD	= MATH_PI / 180.0f;
+const float MATH_RAD2DEG	= 57.2957795f;
 
 
 namespace {

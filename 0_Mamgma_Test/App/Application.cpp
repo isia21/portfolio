@@ -42,7 +42,7 @@ bool CApplication::Initialize(HINSTANCE hInstance)
 	if (m_pWorld == nullptr || !m_pWorld->Init())
 		return false;
 	m_pWorld->GetCamera()->SetViewport(m_lWidth, m_lHeight);
-	m_pWorld->GetCamera()->SetDrunkMode(true);
+	//	m_pWorld->GetCamera()->SetDrunkMode(true);
 
 	// --- Init UI ---
 	m_pUIManager = new CUIManager();
