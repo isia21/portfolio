@@ -1,4 +1,6 @@
 #pragma once
+#include "UI/Base/defs.h"
+
 class C3DObject;
 class CCamera;
 
@@ -21,12 +23,6 @@ enum ERenderCommand2DType
 	RENDER_COMMAND_TEXT
 };
 
-enum ETextAlignment
-{
-	TEXT_ALIGN_LEFT = 0,
-	TEXT_ALIGN_CENTER,
-	TEXT_ALIGN_RIGHT
-};
 
 struct RenderCommand2D
 {

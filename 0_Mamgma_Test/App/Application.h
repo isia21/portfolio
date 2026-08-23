@@ -8,6 +8,10 @@ class CUIButton;
 class CUISmartTree;
 class CUIWindow;
 
+class CScenePage;
+class CObjectInspectorPage;
+
+
 class CApplication
 {
 	DECLARE_SINGLETON(CApplication);
@@ -17,17 +21,12 @@ public:
 		: m_hInstance(nullptr), m_hWnd(nullptr),
 		m_pRenderer(nullptr),
 		m_pWorld(nullptr),
-		m_pUIManager(nullptr),
-		m_bRunning(false),
-		
-		m_pSelectedObject(nullptr),
-		m_pInspectorWindow(nullptr),
-		m_pTxtInspectorName(nullptr),
-		m_pTxtInspectorStats(nullptr),
-		m_pTxtInspectorTransform(nullptr),
-		m_pBtnToggleWireframe(nullptr),
-		m_pBtnDeleteObject(nullptr),
 
+		m_pUIManager(nullptr),
+		m_pUIScenePage(nullptr), m_pUIObjectInspectorPage(nullptr),
+
+		m_bRunning(false),
+		m_pSelectedObject(nullptr),
 		m_lWidth(1280), m_lHeight(720),
 		m_bLockFPS(true), m_lFPSLock(1200){};
 
@@ -38,8 +37,8 @@ public:
 	int Run();
 	HWND GetWindowHandle() const { return m_hWnd; }
 
-	void RebuildSceneTree();
-	void UpdateInspector();
+	int GetWidth() const { return m_lWidth; }
+	int GetHeight() const { return m_lHeight; }
 
 private:
 	bool RegisterWindowClass();
@@ -79,12 +78,6 @@ private:
 	double m_fFPSTime;
 	int m_lFPSFrames;
 
-
-
-
-
-
-
 	// --- Current selected object ---
 	C3DObject* m_pSelectedObject;
 
@@ -93,13 +86,17 @@ private:
 	CWorld* m_pWorld;
 	CUIManager* m_pUIManager;
 	CUITextBox* m_pFPSTextBox;
-	CUISmartTree* m_pSceneTree;
 
-	// --- Inspector Window elements ---
-	CUIWindow* m_pInspectorWindow;
-	CUITextBox* m_pTxtInspectorName;
-	CUITextBox* m_pTxtInspectorStats;
-	CUITextBox* m_pTxtInspectorTransform;
-	CUIButton* m_pBtnToggleWireframe;
-	CUIButton* m_pBtnDeleteObject;
+	// --- UI Pages ---
+	CScenePage* m_pUIScenePage;
+	CObjectInspectorPage* m_pUIObjectInspectorPage;
+
+public:
+	CWorld* GetWorld() const { return m_pWorld; }
+
+	C3DObject* GetSelectedObject() const { return m_pSelectedObject; }
+	void SetSelectedObject(C3DObject* pObj) { /*if (pObj)*/ m_pSelectedObject = pObj; }
+
+	CScenePage* GetScenePage() const { return m_pUIScenePage; }
+	CObjectInspectorPage* GetObjectInspectorPage() const { return m_pUIObjectInspectorPage; }
 };
