@@ -79,6 +79,7 @@
       <LanguageStandard>stdcpp14</LanguageStandard>
       <PrecompiledHeader>Create</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir);</AdditionalIncludeDirectories>
+      <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -99,6 +100,7 @@
       <LanguageStandard>stdcpp14</LanguageStandard>
       <PrecompiledHeader>Create</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir);</AdditionalIncludeDirectories>
+      <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -117,6 +119,7 @@
       <LanguageStandard>stdcpp14</LanguageStandard>
       <PrecompiledHeader>Create</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir);</AdditionalIncludeDirectories>
+      <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -137,6 +140,7 @@
       <LanguageStandard>stdcpp14</LanguageStandard>
       <PrecompiledHeader>Create</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir);</AdditionalIncludeDirectories>
+      <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -154,28 +158,38 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="App\Application.cpp" />
-    <ClCompile Include="Engine\3DObject.cpp" />
-    <ClCompile Include="Engine\Camera.cpp" />
-    <ClCompile Include="Engine\Renderer.cpp" />
-    <ClCompile Include="Engine\Scene.cpp" />
-    <ClCompile Include="Engine\Slicer.cpp" />
-    <ClCompile Include="Engine\UI.cpp" />
+    <ClCompile Include="Engine\Graphics.cpp" />
+    <ClCompile Include="Engine\Graphics\Objects\3DObject.cpp" />
     <ClCompile Include="Engine\World.cpp" />
-    <ClCompile Include="Math\Vector3.cpp" />
+    <ClCompile Include="Engine\Graphics\Camera.cpp" />
+    <ClCompile Include="Engine\Input.cpp" />
+    <ClCompile Include="Engine\Input\Keyboard.cpp" />
+    <ClCompile Include="Engine\Input\Mouse.cpp" />
+    <ClCompile Include="Engine\Graphics\Renderer.cpp" />
+    <ClCompile Include="Engine\World\Scene.cpp" />
+    <ClCompile Include="Engine\Graphics\Objects\Slicer.cpp" />
+    <ClCompile Include="Engine\Graphics\UI.cpp" />
+    <ClCompile Include="Engine\World\World.cpp" />
+    <ClCompile Include="Engine\Math\Vector3.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="Utils\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App\Application.h" />
-    <ClInclude Include="Engine\3DObject.h" />
-    <ClInclude Include="Engine\Camera.h" />
-    <ClInclude Include="Engine\Renderer.h" />
-    <ClInclude Include="Engine\Scene.h" />
-    <ClInclude Include="Engine\Slicer.h" />
-    <ClInclude Include="Engine\UI.h" />
+    <ClInclude Include="Engine\Graphics.h" />
+    <ClInclude Include="Engine\Graphics\Objects\3DObject.h" />
     <ClInclude Include="Engine\World.h" />
-    <ClInclude Include="Math\Vector3.h" />
+    <ClInclude Include="Engine\Graphics\Camera.h" />
+    <ClInclude Include="Engine\Input.h" />
+    <ClInclude Include="Engine\Input\Keyboard.h" />
+    <ClInclude Include="Engine\Input\Mouse.h" />
+    <ClInclude Include="Engine\Graphics\Renderer.h" />
+    <ClInclude Include="Engine\World\Scene.h" />
+    <ClInclude Include="Engine\Graphics\Objects\Slicer.h" />
+    <ClInclude Include="Engine\Graphics\UI.h" />
+    <ClInclude Include="Engine\World\World.h" />
+    <ClInclude Include="Engine\Math\Vector3.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Utils\Singleton.h" />
     <ClInclude Include="Utils\Utils.h" />

@@ -1,12 +1,8 @@
 #include "stdafx.h"
 
-#include "../Engine/Renderer.h"
-#include "../Engine/3DObject.h"
-#include "../Engine/Slicer.h"
-#include "../Engine/Camera.h"
+#include "../Engine/Graphics.h"
+#include "../Engine/Input.h"
 #include "../Engine/World.h"
-#include "../Engine/Scene.h"
-#include "../Engine/UI.h"
 
 #include "Application.h"
 

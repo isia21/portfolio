@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "3DObject.h"
-#include "../Math/Vector3.h"
+#include "../../Math/Vector3.h"
 
 #include "Slicer.h"
 

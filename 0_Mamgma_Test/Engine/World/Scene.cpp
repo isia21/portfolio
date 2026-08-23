@@ -1,7 +1,6 @@
 #include "stdafx.h"
 
-#include "3DObject.h"
-#include "Slicer.h"
+#include "../Graphics.h"
 #include "Scene.h"
 
 //-----------------------------------------------------------------------------

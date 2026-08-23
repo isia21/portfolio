@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "Renderer.h"
-#include "3DObject.h"
+#include "Objects/3DObject.h"
 #include "Camera.h"
 
 namespace
