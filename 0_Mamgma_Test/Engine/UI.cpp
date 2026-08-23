@@ -112,6 +112,18 @@ bool CUIManager::ProcessMouseUp(int lMouseX, int lMouseY, int lButton)
 	return bHandled;
 }
 
+bool CUIManager::ProcessMouseWheel(int lMouseX, int lMouseY, int zDelta)
+{
+	for (auto it = m_vElements.rbegin(); it != m_vElements.rend(); ++it)
+	{
+		if ((*it)->IsVisible() && (*it)->IsEnabled())
+		{
+			if ((*it)->OnMouseWheel(lMouseX, lMouseY, zDelta))
+				return true;
+		}
+	}
+	return false;
+}
 //-----------------------------------------------------------------------------
 // CUIElement
 //-----------------------------------------------------------------------------
@@ -335,6 +347,7 @@ CUISmartTree::CUISmartTree(
 	, m_dwSelectedBgColor(0x1E4D78FF)
 	, m_dwHoverBgColor(0x282828AA)
 	, m_dwTextColor(0xEEEEEEFF)
+	, m_lScrollY(0)
 {}
 
 CUISmartTree::~CUISmartTree()
@@ -432,11 +445,11 @@ void CUISmartTree::Render(CRenderer* pRenderer)
 	
 	for (const SFlatItem& item : vFlatNodes)
 	{
-		const int itemTopY = absY + item.lItemY;
+		const int itemTopY = absY + item.lItemY - m_lScrollY;
 
-		
-		if (itemTopY + m_lItemHeight > absY + m_lHeight)
-			break;
+
+		if (itemTopY + m_lItemHeight <= absY || itemTopY >= absY + m_lHeight)
+			continue;
 
 		SUITreeNode* pNode = item.pNode;
 
@@ -494,7 +507,7 @@ bool CUISmartTree::OnMouseMove(int lMouseX, int lMouseY)
 	m_pHoveredNode = nullptr;
 	for (const SFlatItem& item : vFlatNodes)
 	{
-		const int itemTopY = absY + item.lItemY;
+		const int itemTopY = absY + item.lItemY - m_lScrollY;
 		if (lMouseY >= itemTopY && lMouseY < (itemTopY + m_lItemHeight))
 		{
 			m_pHoveredNode = item.pNode;
@@ -525,7 +538,7 @@ bool CUISmartTree::OnMouseDown(int lMouseX, int lMouseY, int lButton)
 
 		for (const SFlatItem& item : vFlatNodes)
 		{
-			const int itemTopY = absY + item.lItemY;
+			const int itemTopY = absY + item.lItemY - m_lScrollY;
 			if (lMouseY >= itemTopY && lMouseY < (itemTopY + m_lItemHeight))
 			{
 				SUITreeNode* pNode = item.pNode;
@@ -561,6 +574,20 @@ bool CUISmartTree::OnMouseDown(int lMouseX, int lMouseY, int lButton)
 bool CUISmartTree::OnMouseUp(int lMouseX, int lMouseY, int lButton)
 {
 	return IsPointInside(lMouseX, lMouseY);
+}
+
+bool CUISmartTree::OnMouseWheel(int lMouseX, int lMouseY, int zDelta)
+{
+	if (!m_bVisible || !m_bEnabled || !IsPointInside(lMouseX, lMouseY))
+		return false;
+
+	// --- Scroll for 2 lines/items per WHEEL_DELTA
+	m_lScrollY -= (zDelta / WHEEL_DELTA) * (m_lItemHeight * 2);
+
+	if (m_lScrollY < 0)
+		m_lScrollY = 0;
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -829,5 +856,17 @@ bool CUIWindow::OnMouseUp(int lMouseX, int lMouseY, int lButton)
 		}
 	}
 
+	return false;
+}
+bool CUIWindow::OnMouseWheel(int lMouseX, int lMouseY, int zDelta)
+{
+	if (!m_bVisible || !m_bEnabled || m_bCollapsed)
+		return false;
+
+	for (auto it = m_vChildren.rbegin(); it != m_vChildren.rend(); ++it)
+	{
+		if ((*it)->OnMouseWheel(lMouseX, lMouseY, zDelta))
+			return true;
+	}
 	return false;
 }

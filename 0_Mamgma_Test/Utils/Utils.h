@@ -17,3 +17,7 @@ namespace Utils {
 		Utils::Message("[ASSERT]\n\"%s\"-- \"%s\"() on \"%s\" %d(Line).\n",#op,__FUNCTION__,__FILE__,__LINE__); \
 		assert(op); \
 	}
+
+extern const float MATH_PI;			// = 3.14159265358979323846f;
+extern const float MATH_HALF_PI;	// = 3.14159265358979323846f;
+extern const float MATH_DEG2RAD;	// = 3.14159265358979323846f;

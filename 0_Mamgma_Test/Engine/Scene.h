@@ -47,6 +47,10 @@ public:
 	bool IsModified() const { return m_bModified; }
 	void SetModified(bool bModified) { m_bModified = bModified; }
 
+	// --- Slicing Pipeline ---
+	void ExecuteSlicingPipeline();
+	void ClearMeshParts();
+
 private:
 	std::string m_strName;
 	std::string m_strFilePath;

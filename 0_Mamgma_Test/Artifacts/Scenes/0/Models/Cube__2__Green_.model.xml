@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CADModel version="1.0" name="Cube #2 (Green)">
-    <Properties color="0x00FF00FF" renderType="Solid" visible="true" />
+    <Properties color="0x00FF00FF" renderType="Solid" visible="false" />
     <Transform>
         <Position x="3" y="0" z="0" />
         <Rotation x="0" y="45" z="0" />

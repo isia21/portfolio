@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CADModel version="1.0" name="Cube #1 (Red)_Lower_Part_1">
+    <Properties color="0xFF0000FF" renderType="Wireframe" visible="true" />
+    <Transform>
+        <Position x="-3.02380967" y="-0.523809552" z="-0.0238095243" />
+        <Rotation x="0" y="0" z="0" />
+        <Scale x="1" y="1" z="1" />
+    </Transform>
+    <Geometry verticesCount="12" trianglesCount="14">
+        <Vertices>
+                -0.9762 -0.4762 1.0238 0xFFFFFFFF
+                1.0238 -0.4762 1.0238 0xFFFFFFFF
+                1.0238 0.5238 1.0238 0xFFFFFFFF
+                0.0238 0.5238 1.0238 0xFFFFFFFF
+                -0.9762 0.5238 1.0238 0xFFFFFFFF
+                -0.9762 -0.4762 -0.9762 0xFFFFFFFF
+                1.0238 -0.4762 -0.9762 0xFFFFFFFF
+                1.0238 0.5238 0.0238 0xFFFFFFFF
+                -0.9762 0.5238 0.0238 0xFFFFFFFF
+                0.0238 0.5238 -0.9762 0xFFFFFFFF
+                -0.9762 0.5238 -0.9762 0xFFFFFFFF
+                1.0238 0.5238 -0.9762 0xFFFFFFFF
+            </Vertices>
+        <Triangles>
+                0 1 2
+                0 2 3
+                0 3 4
+                5 0 4
+                5 1 0
+                1 6 7
+                1 7 2
+                5 6 1
+                5 4 8
+                6 5 9
+                5 10 9
+                5 8 10
+                6 9 11
+                6 11 7
+            </Triangles>
+    </Geometry>
+</CADModel>

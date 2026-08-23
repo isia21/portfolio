@@ -1,5 +1,11 @@
 #include "stdafx.h"
 
+
+const float MATH_PI			= 3.14159265358979323846f;
+const float MATH_HALF_PI	= MATH_PI / 2.0f;
+const float MATH_DEG2RAD	= MATH_PI / 180.0f;
+
+
 namespace {
 	CRITICAL_SECTION g_logCriticalSection;
 	INIT_ONCE g_logInitOnce = INIT_ONCE_STATIC_INIT;
@@ -99,3 +105,4 @@ namespace Utils {
 
 	void Init(HWND h) { hWnd = h; }
 }
+

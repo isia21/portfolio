@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CADModel version="1.0" name="Sine Mesh (Source)_Upper_Part_1_Upper_Part_12">
+    <Properties color="0xFF00FFFF" renderType="Wireframe" visible="true" />
+    <Transform>
+        <Position x="4.83976841" y="3.10977149" z="-7.95912409" />
+        <Rotation x="0" y="0" z="0" />
+        <Scale x="1" y="1" z="1" />
+    </Transform>
+    <Geometry verticesCount="33" trianglesCount="37">
+        <Vertices>
+                0.1602 -0.0365 -0.5096 0xFFFFFFFF
+                0.1602 -0.1098 -0.5572 0xFFFFFFFF
+                0.0659 -0.1098 -0.5096 0xFFFFFFFF
+                0.0040 0.0034 -0.3534 0xFFFFFFFF
+                0.1602 0.1455 -0.3534 0xFFFFFFFF
+                0.0040 -0.1098 -0.4630 0xFFFFFFFF
+                -0.0832 -0.1098 -0.3534 0xFFFFFFFF
+                -0.1425 -0.1098 -0.2069 0xFFFFFFFF
+                0.0040 0.1039 -0.1971 0xFFFFFFFF
+                0.1602 0.2588 -0.1971 0xFFFFFFFF
+                -0.1469 -0.1098 -0.1971 0xFFFFFFFF
+                -0.1523 -0.0894 -0.0409 0xFFFFFFFF
+                0.0040 0.1380 -0.0409 0xFFFFFFFF
+                0.1602 0.2972 -0.0409 0xFFFFFFFF
+                -0.1523 -0.1098 -0.1548 0xFFFFFFFF
+                -0.1635 -0.1098 -0.0409 0xFFFFFFFF
+                -0.1627 -0.1098 -0.0304 0xFFFFFFFF
+                -0.1523 -0.1098 0.0730 0xFFFFFFFF
+                -0.1476 -0.1098 0.1107 0xFFFFFFFF
+                0.0040 0.1039 0.1154 0xFFFFFFFF
+                0.1602 0.2588 0.1154 0xFFFFFFFF
+                -0.1469 -0.1098 0.1154 0xFFFFFFFF
+                -0.1061 -0.1098 0.2254 0xFFFFFFFF
+                0.0040 0.0034 0.2716 0xFFFFFFFF
+                0.1602 0.1455 0.2716 0xFFFFFFFF
+                -0.0832 -0.1098 0.2716 0xFFFFFFFF
+                -0.0488 -0.1098 0.3244 0xFFFFFFFF
+                0.0040 -0.1098 0.3812 0xFFFFFFFF
+                0.0288 -0.1098 0.4031 0xFFFFFFFF
+                0.1602 -0.0365 0.4279 0xFFFFFFFF
+                0.0659 -0.1098 0.4279 0xFFFFFFFF
+                0.1260 -0.1098 0.4621 0xFFFFFFFF
+                0.1602 -0.1098 0.4755 0xFFFFFFFF
+            </Vertices>
+        <Triangles>
+                0 1 2
+                3 0 2
+                0 3 4
+                3 2 5
+                3 5 6
+                3 6 7
+                8 3 7
+                3 8 4
+                4 8 9
+                8 7 10
+                11 8 10
+                8 11 12
+                8 12 9
+                9 12 13
+                11 10 14
+                11 14 15
+                11 15 16
+                11 16 17
+                12 11 17
+                12 17 18
+                19 12 18
+                12 19 13
+                13 19 20
+                19 18 21
+                19 21 22
+                23 19 22
+                19 23 20
+                20 23 24
+                23 22 25
+                23 25 26
+                23 26 27
+                24 23 27
+                24 27 28
+                29 24 28
+                29 28 30
+                29 30 31
+                29 31 32
+            </Triangles>
+    </Geometry>
+</CADModel>

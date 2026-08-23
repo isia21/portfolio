@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CADModel version="1.0" name="Sphere #2 (Blue Wire)">
-    <Properties color="0x0000FFFF" renderType="Wireframe" visible="true" />
+    <Properties color="0x0000FFFF" renderType="Wireframe" visible="false" />
     <Transform>
         <Position x="2" y="1" z="4" />
         <Rotation x="0" y="0" z="0" />

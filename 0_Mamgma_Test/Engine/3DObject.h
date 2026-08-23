@@ -45,7 +45,7 @@ public:
 
 public:
 	C3DObject();
-	~C3DObject();
+	virtual ~C3DObject();
 
 
 public:
@@ -80,6 +80,15 @@ public:
 	void SetParent(C3DObject* pParent);
 	C3DObject* GetParent() const { return m_pParent; }
 
+	void AddChild(C3DObject* pChild)
+	{
+		if (pChild != nullptr)
+		{
+			pChild->m_pParent = this;
+			m_vChildren.push_back(pChild);
+		}
+	}
+	void ClearChildren() { m_vChildren.clear(); }
 	const std::vector<C3DObject*>& GetChildren() const { return m_vChildren; }
 
 	// --- Geometry ---
@@ -124,11 +133,15 @@ private:
 	// --- Object visibility ---
 	bool m_bVisible;
 
+//#ifdef _DEBUG
+protected: // just for access in slicer
+//#endif
 	// --- Object transform ---
 	Vector3 m_vPosition;
 	Vector3 m_vRotation;
 	Vector3 m_vScale;
 
+private:
 	// --- Object hierarchy ---
 	C3DObject* m_pParent;
 	std::vector<C3DObject*> m_vChildren;
@@ -136,4 +149,12 @@ private:
 	// --- Object geometry ---
 	std::vector<Vertex3D> m_vVertices;
 	std::vector<unsigned int> m_vIndices;
+
+public:
+	void AddVertex(const Vertex3D& vertex) { m_vVertices.push_back(vertex); }
+	void AddIndices(const std::vector<unsigned int>& indices) { m_vIndices.insert(m_vIndices.end(), indices.begin(), indices.end()); }
+	void AddIndices(unsigned int indices) { m_vIndices.push_back(indices); }
+
+	// --- Object cloning (deep copy for slice pipline) ---
+	C3DObject* Clone() const;
 };

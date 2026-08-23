@@ -7,8 +7,6 @@
 //-----------------------------------------------------------------------------
 namespace
 {
-	const float CAMERA_PI = 3.14159265358979323846f;
-
 	const float CAMERA_DEFAULT_ZOOM = 10.0f;
 	const float CAMERA_DEFAULT_ORBIT_SPEED = 0.35f;
 
@@ -57,8 +55,8 @@ void CCamera::Update(float fDeltaTime)
 
 	m_fOrbitAngle += m_fOrbitSpeed * fDeltaTime;
 
-	if (m_fOrbitAngle > CAMERA_PI * 2.0f)
-		m_fOrbitAngle -= CAMERA_PI * 2.0f;
+	if (m_fOrbitAngle > MATH_PI * 2.0f)
+		m_fOrbitAngle -= MATH_PI * 2.0f;
 
 	m_fDrunkTime += fDeltaTime;
 
@@ -193,7 +191,7 @@ void CCamera::ApplyProjection() const
 	const float fNear = 0.1f;
 	const float fFar = 1000.0f;
 
-	const float fTop = std::tan((fFov * CAMERA_PI / 180.0f) * 0.5f) * fNear;
+	const float fTop = std::tan((fFov * MATH_PI / 180.0f) * 0.5f) * fNear;
 	const float fRight = fTop * fAspect;
 
 	glFrustum(-fRight, fRight, -fTop, fTop, fNear, fFar);

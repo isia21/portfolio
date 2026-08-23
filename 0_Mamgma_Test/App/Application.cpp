@@ -2,6 +2,7 @@
 
 #include "../Engine/Renderer.h"
 #include "../Engine/3DObject.h"
+#include "../Engine/Slicer.h"
 #include "../Engine/Camera.h"
 #include "../Engine/World.h"
 #include "../Engine/Scene.h"
@@ -68,11 +69,14 @@ bool CApplication::Initialize(HINSTANCE hInstance)
 		m_pUIManager->AddElement(m_pFPSTextBox);
 
 
-		// --- Create Scene Outliner Window ---
+		// --- Create Scene Hierarchy & Slicing ---
 		{
+			const int lSceneWinWidth = 280;
+			const int lSceneWinHeight = 440;
+
 			CUIWindow* pSceneWindow = new CUIWindow(
 				10, 10,
-				280, 380,
+				lSceneWinWidth, lSceneWinHeight,
 				"Scene Outliner",
 				0x1E1E1EF2,
 				0x282828FF,
@@ -214,9 +218,9 @@ bool CApplication::Initialize(HINSTANCE hInstance)
 			pSceneWindow->AddChild(pBtnExport);
 
 			// Smart Tree (Scene Outliner)
-			const int lTreeY = 58;
+			const int lTreeY = 56;
 			const int lTreeWidth = 268;
-			const int lTreeHeight = 314;
+			const int lTreeHeight = 340;
 
 			m_pSceneTree = new CUISmartTree(6, lTreeY, lTreeWidth, lTreeHeight, 20, 12);
 
@@ -243,6 +247,77 @@ bool CApplication::Initialize(HINSTANCE hInstance)
 				});
 
 			pSceneWindow->AddChild(m_pSceneTree);
+
+
+			// --- Bottom slicer toolbar (Slicing Actions) ---
+			const int lBottomY = lSceneWinHeight - 34;
+			const int lBottomH = 26;
+			int curBottomX = 6;
+
+			// [Add Slicer]
+			CUIButton* pBtnAddSlicer = new CUIButton(curBottomX, lBottomY, 78, lBottomH, "+ Slicer", [this]() {
+				if (m_pWorld == nullptr || m_pWorld->GetScene() == nullptr)
+					return;
+
+				CScene* pScene = m_pWorld->GetScene();
+
+				size_t slicerCount = 0;
+				for (C3DObject* pObj : pScene->GetObjects())
+				{
+					if (pObj && pObj->GetObjectType() == C3DObject::eOT_Slicer)
+						++slicerCount;
+				}
+
+				CSlicer* pNewSlicer = new CSlicer(12.0f, 0xFF005580);
+				pNewSlicer->SetObjectType(C3DObject::eOT_Slicer);
+
+				char szName[64] = {};
+				sprintf_s(szName, sizeof(szName), "Slicer #%zu", slicerCount + 1);
+				pNewSlicer->SetName(szName);
+
+				pNewSlicer->SetPosition(0.0f, static_cast<float>(slicerCount) * 1.5f, 0.0f);
+
+				pScene->AddObject(pNewSlicer);
+				Utils::ODS("[UI] Added new slicing tool: %s", szName);
+				});
+			pSceneWindow->AddChild(pBtnAddSlicer);
+			curBottomX += 78 + 4;
+
+			// [Cut Scene]
+			CUIButton* pBtnRunCut = new CUIButton(curBottomX, lBottomY, 96, lBottomH, "Cut Scene", [this]() {
+				if (m_pWorld == nullptr || m_pWorld->GetScene() == nullptr)
+					return;
+
+				m_pWorld->GetScene()->ExecuteSlicingPipeline();
+				m_pSelectedObject = nullptr;
+				UpdateInspector();
+				});
+			pBtnRunCut->SetNormalColor(0x1B5E20EE);
+			pBtnRunCut->SetHoverColor(0x2E7D32FF);
+			pBtnRunCut->SetPressedColor(0x144017FF);
+			pSceneWindow->AddChild(pBtnRunCut);
+			curBottomX += 96 + 4;
+
+			// [Reset Cuts]
+			CUIButton* pBtnResetCuts = new CUIButton(curBottomX, lBottomY, 86, lBottomH, "Reset Cuts", [this]() {
+				if (m_pWorld == nullptr || m_pWorld->GetScene() == nullptr)
+					return;
+
+				CScene* pScene = m_pWorld->GetScene();
+				pScene->ClearMeshParts();
+
+				for (C3DObject* pObj : pScene->GetObjects())
+				{
+					if (pObj && pObj->GetObjectType() == C3DObject::eOT_SourceModel)
+						pObj->SetVisible(true);
+				}
+
+				pScene->MarkStructureChanged();
+				m_pSelectedObject = nullptr;
+				UpdateInspector();
+				Utils::ODS("[UI] Slices reset. Original models restored.");
+				});
+			pSceneWindow->AddChild(pBtnResetCuts);
 
 			m_pUIManager->AddElement(pSceneWindow);
 		}
@@ -476,24 +551,40 @@ void CApplication::RebuildSceneTree()
 	m_pSceneTree->Clear();
 
 	CScene* pScene = m_pWorld->GetScene();
-	const std::vector<C3DObject*>& vObjects = pScene->GetObjects();
+	const auto& vObjects = pScene->GetObjects();
 
-	// --- Add each 3D object in the scene to the scene tree ---
+	// --- 1. Source models and their sliced parts ---
 	for (C3DObject* pObj : vObjects)
 	{
-		if (pObj == nullptr)
-			continue;
+		if (pObj && pObj->GetObjectType() == C3DObject::eOT_SourceModel)
+		{
+			SUITreeNode* pSourceNode = m_pSceneTree->AddRoot(pObj->GetName(), pObj);
+			pSourceNode->bObjectVisible = pObj->IsVisible();
 
-		const char* pszName = strlen(pObj->GetName()) > 0 ? pObj->GetName() : "Unnamed Entity";
-
-		// --- Create a tree node and associate the 3D object with it ---
-		SUITreeNode* pNode = m_pSceneTree->AddRoot(pszName, pObj);
-
-		// --- Sync visibility status between the scene tree node and the actual 3D object ---
-		pNode->bObjectVisible = pObj->IsVisible();
+			for (C3DObject* pChild : pObj->GetChildren())
+			{
+				if (pChild != nullptr)
+				{
+					SUITreeNode* pChildNode = m_pSceneTree->AddChild(pSourceNode, pChild->GetName(), pChild);
+					pChildNode->bObjectVisible = pChild->IsVisible();
+				}
+			}
+		}
 	}
 
-	Utils::ODS("[UI] Scene tree rebuilt. Nodes: %d", static_cast<int>(vObjects.size()));
+	// --- 2. Separated group for slicers/cutters in the tree ---
+	SUITreeNode* pSlicersGroup = nullptr;
+	for (C3DObject* pObj : vObjects)
+	{
+		if (pObj && pObj->GetObjectType() == C3DObject::eOT_Slicer)
+		{
+			if (pSlicersGroup == nullptr)
+				pSlicersGroup = m_pSceneTree->AddRoot("[ Slicers / Cutters ]", nullptr);
+
+			SUITreeNode* pSlicerNode = m_pSceneTree->AddChild(pSlicersGroup, pObj->GetName(), pObj);
+			pSlicerNode->bObjectVisible = pObj->IsVisible();
+		}
+	}
 }
 
 void CApplication::Update()
@@ -527,19 +618,19 @@ void CApplication::Render()
 	// --- Clear screen and set camera ---
 	m_pRenderer->Clear();
 
+	// --- Render World ---
 	if (m_pWorld != nullptr)
+	{
 		m_pRenderer->SetCamera(m_pWorld->GetCamera());
 
+		// --- Render World Objects ---
+		for (C3DObject* pObject : m_pWorld->GetObjects())
+			m_pRenderer->Draw(pObject);
+	}
 
-	// --- Render World Objects ---
-	for (C3DObject* pObject : m_pWorld->GetObjects())
-		m_pRenderer->Draw(pObject);
-
-	
 	// --- Render UI Canvas ---
 	if (m_pUIManager != nullptr)
 		m_pUIManager->Render(m_pRenderer);
-
 
 	// --- Render all scene/frame data -- 
 	m_pRenderer->Render();
@@ -587,7 +678,7 @@ void CApplication::Shutdown()
 	Utils::ODS("[INFO] Shutting down application...");
 
 	SAFEDELETE(m_pUIManager);
-	SAFEDELETE(m_pFPSTextBox);//	 = nullptr;
+	//SAFEDELETE(m_pFPSTextBox);//	 = nullptr;
 
 	if (m_pRenderer != nullptr)
 		m_pRenderer->Shutdown();
@@ -683,7 +774,16 @@ LRESULT CApplication::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 			m_pUIManager->ProcessMouseUp(mouseX, mouseY, 0);
 		return 0;
 	}
+	case WM_MOUSEWHEEL:
+	{
+		POINT pt = { LOWORD(lParam), HIWORD(lParam) };
+		ScreenToClient(hWnd, &pt);
 
+		const int zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+		if (m_pUIManager != nullptr)
+			m_pUIManager->ProcessMouseWheel(pt.x, pt.y, zDelta);
+		return 0;
+	}
 	default:
 		break;
 	}

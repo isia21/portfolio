@@ -184,13 +184,11 @@ C3DObject* C3DObject::CreateSphere(float fRadius)
 	const int lRings = 16;
 
 	const unsigned int dwColor = 0xFFFFFFFF;
-
-	const float fPi = 3.14159265358979323846f;
-
+	
 	for (int y = 0; y <= lRings; ++y)
 	{
 		const float fV = static_cast<float>(y) / static_cast<float>(lRings);
-		const float fPhi = fV * fPi;
+		const float fPhi = fV * MATH_PI;
 
 		const float fSinPhi = sinf(fPhi);
 		const float fCosPhi = cosf(fPhi);
@@ -198,7 +196,7 @@ C3DObject* C3DObject::CreateSphere(float fRadius)
 		for (int x = 0; x <= lSegments; ++x)
 		{
 			const float fU = static_cast<float>(x) / static_cast<float>(lSegments);
-			const float fTheta = fU * 2.0f * fPi;
+			const float fTheta = fU * 2.0f * MATH_PI;
 
 			const float fSinTheta = sinf(fTheta);
 			const float fCosTheta = cosf(fTheta);
@@ -356,6 +354,33 @@ void C3DObject::SetParent(C3DObject* pParent)
 		m_pParent->m_vChildren.push_back(this);
 }
 
+//-----------------------------------------------------------------------------
+// Slice pipeline
+//-----------------------------------------------------------------------------
+C3DObject* C3DObject::Clone() const
+{
+	C3DObject* pClone = new C3DObject();
+	if (pClone == nullptr)
+		return nullptr;
+
+	// --- Copy params n states ---
+	pClone->m_strName = m_strName;
+	pClone->m_dwModelColor = m_dwModelColor;
+	pClone->m_eRenderType = m_eRenderType;
+	pClone->m_eObjectType = m_eObjectType;
+	pClone->m_bVisible = m_bVisible;
+
+	// --- Copy TRS data
+	pClone->m_vPosition = m_vPosition;
+	pClone->m_vRotation = m_vRotation;
+	pClone->m_vScale = m_vScale;
+
+	// --- Copy Mesh Data
+	pClone->m_vVertices = m_vVertices;
+	pClone->m_vIndices = m_vIndices;
+
+	return pClone;
+}
 
 //-----------------------------------------------------------------------------
 // Rendering
@@ -367,8 +392,43 @@ void C3DObject::Render()
 
 	glPushMatrix();
 
+	// --- 2. PING-PONG effect only for sliced partrs ---
+	Vector3 finalPosition = m_vPosition;
+
+	if (m_eObjectType == eOT_MeshParts)
+	{
+		Vector3 explodeDir = m_vPosition;
+		if (m_pParent != nullptr)
+		{
+			explodeDir.x = m_vPosition.x - m_pParent->GetPosition().x;
+			explodeDir.y = m_vPosition.y - m_pParent->GetPosition().y;
+			explodeDir.z = m_vPosition.z - m_pParent->GetPosition().z;
+		}
+
+		const float fLenSq = explodeDir.x * explodeDir.x + explodeDir.y * explodeDir.y + explodeDir.z * explodeDir.z;
+		if (fLenSq > 1e-6f)
+		{
+			const float fInvLen = 1.0f / sqrtf(fLenSq);
+			explodeDir.x *= fInvLen;
+			explodeDir.y *= fInvLen;
+			explodeDir.z *= fInvLen;
+		}
+		else
+		{
+			explodeDir = { 0.0f, 1.0f, 0.0f };
+		}
+
+		const float fTimeSec = static_cast<float>(GetTickCount64() % 100000) / 1000.0f;
+		const float fPingPong = (sinf(fTimeSec * 2.5f) * 0.5f + 0.5f); // [0.0 .. 1.0]
+		const float fMaxDistance = 1.5f;
+
+		finalPosition.x += explodeDir.x * fPingPong * fMaxDistance;
+		finalPosition.y += explodeDir.y * fPingPong * fMaxDistance;
+		finalPosition.z += explodeDir.z * fPingPong * fMaxDistance;
+	}
+	
 	// --- Object transform ---
-	glTranslatef(m_vPosition.x, m_vPosition.y, m_vPosition.z);
+	glTranslatef(finalPosition.x, finalPosition.y, finalPosition.z);
 
 	glRotatef(m_vRotation.x, 1.0f, 0.0f, 0.0f);
 	glRotatef(m_vRotation.y, 0.0f, 1.0f, 0.0f);

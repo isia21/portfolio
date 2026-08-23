@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CADModel version="1.0" name="Sphere #1 (Yellow)">
-    <Properties color="0xFFFF00FF" renderType="Solid" visible="true" />
+    <Properties color="0xFFFF00FF" renderType="Solid" visible="false" />
     <Transform>
         <Position x="-2" y="0" z="4" />
         <Rotation x="0" y="0" z="0" />

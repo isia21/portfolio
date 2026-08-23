@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "3DObject.h"
+#include "Slicer.h"
 #include "Scene.h"
 
 //-----------------------------------------------------------------------------
@@ -181,15 +182,13 @@ static std::string SanitizeFileName(const std::string& str)
 
 static Vector3 TransformVertexToWorld(const Vertex3D& v, const Vector3& pos, const Vector3& rot, const Vector3& scale)
 {
-	const float fDegToRad = 3.14159265358979323846f / 180.0f;
-
 	// 1. Scale
 	Vector3 res = { v.x * scale.x, v.y * scale.y, v.z * scale.z };
 
 	// 2. Rotate Z
 	if (rot.z != 0.0f)
 	{
-		const float radZ = rot.z * fDegToRad;
+		const float radZ = rot.z * MATH_DEG2RAD;
 		const float cosZ = cosf(radZ);
 		const float sinZ = sinf(radZ);
 		const float rx = res.x * cosZ - res.y * sinZ;
@@ -201,7 +200,7 @@ static Vector3 TransformVertexToWorld(const Vertex3D& v, const Vector3& pos, con
 	// 3. Rotate Y
 	if (rot.y != 0.0f)
 	{
-		const float radY = rot.y * fDegToRad;
+		const float radY = rot.y * MATH_DEG2RAD;
 		const float cosY = cosf(radY);
 		const float sinY = sinf(radY);
 		const float rx = res.x * cosY + res.z * sinY;
@@ -213,7 +212,7 @@ static Vector3 TransformVertexToWorld(const Vertex3D& v, const Vector3& pos, con
 	// 4. Rotate X
 	if (rot.x != 0.0f)
 	{
-		const float radX = rot.x * fDegToRad;
+		const float radX = rot.x * MATH_DEG2RAD;
 		const float cosX = cosf(radX);
 		const float sinX = sinf(radX);
 		const float ry = res.y * cosX - res.z * sinX;
@@ -518,4 +517,145 @@ void CScene::SetName(const char* pszName)
 void CScene::SetFilePath(const char* pszFilePath)
 {
 	m_strFilePath = (pszFilePath != nullptr) ? pszFilePath : "";
+}
+
+//-----------------------------------------------------------------------------
+// Slicing Pipeline
+//-----------------------------------------------------------------------------
+void CScene::ClearMeshParts()
+{
+	// --- Clear child references in source models ---
+	for (C3DObject* pObj : m_vObjects)
+	{
+		if (pObj != nullptr && pObj->GetObjectType() == C3DObject::eOT_SourceModel)
+		{
+			pObj->ClearChildren();
+		}
+	}
+
+	// --- Delete parts; Clear scene n memory ---
+	auto it = m_vObjects.begin();
+	while (it != m_vObjects.end())
+	{
+		if (*it != nullptr && (*it)->GetObjectType() == C3DObject::eOT_MeshParts)
+		{
+			delete* it;
+			it = m_vObjects.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+}
+
+void CScene::ExecuteSlicingPipeline()
+{
+	// ------
+	// 1. WIPE PREV RESULT
+	// ------
+	// --- Clear prev slice results ---
+	ClearMeshParts();
+
+	// ------
+	// 2. FIND CUR SCENE/STATE SLICERS
+	// ------
+	// --- Collect all active Slicers ---
+	std::vector<CSlicer*> vActiveSlicers;
+	for (C3DObject* pObj : m_vObjects)
+	{
+		if (pObj != nullptr && pObj->GetObjectType() == C3DObject::eOT_Slicer && pObj->IsVisible())
+		{
+			CSlicer* pSlicer = dynamic_cast<CSlicer*>(pObj);
+			if (pSlicer != nullptr)
+				vActiveSlicers.push_back(pSlicer);
+		}
+	}
+
+	// --- In case we dont have any slicer - do nothing ---
+	if (vActiveSlicers.empty())
+	{
+		for (C3DObject* pObj : m_vObjects)
+		{
+			if (pObj != nullptr && pObj->GetObjectType() == C3DObject::eOT_SourceModel)
+				pObj->SetVisible(true);
+		}
+		m_bStructureChanged = true;
+		Utils::ODS("[SCENE_PIPELINE] No active slicers. Source models restored.");
+		return;
+	}
+
+
+	// ------
+	// 3. FIND CUR SCENE/STATE OBJECTS TO SLICE
+	// ------
+	std::vector<C3DObject*> vSources;
+	for (C3DObject* pObj : m_vObjects)
+	{
+		if (pObj != nullptr && pObj->GetObjectType() == C3DObject::eOT_SourceModel)
+			vSources.push_back(pObj);
+	}
+
+
+	// ------
+	// 4. CASCADE SLICING EACH SOURCE NESH
+	// ------
+	size_t totalGeneratedParts = 0;
+	for (C3DObject* pSource : vSources)
+	{
+		// --- Gen#0 : Make DeepCopy for Source object
+		std::vector<C3DObject*> vCurrentGeneration;
+		vCurrentGeneration.push_back(pSource->Clone());
+
+		// --- Slice each objects
+		for (CSlicer* pSlicer : vActiveSlicers)
+		{
+			std::vector<C3DObject*> vNextGeneration;
+
+			for (C3DObject* pCurrentPart : vCurrentGeneration)
+			{
+				std::vector<C3DObject*> vCutPieces;
+
+				// --- Try to slice current part/object per new Pieces ---
+				if (CMeshSlicer::Slice(pCurrentPart, pSlicer, vCutPieces, true))
+				{
+					// --- Success slicing => new Pieces to next Gen
+					vNextGeneration.insert(vNextGeneration.end(), vCutPieces.begin(), vCutPieces.end());
+					delete pCurrentPart;
+				}
+				else
+				{
+					// --- No slicer influence to object --- 
+					vNextGeneration.push_back(pCurrentPart);
+				}
+			}
+
+			vCurrentGeneration = std::move(vNextGeneration);
+		}
+		
+		// ------
+		// 5. COLLECT ALL PROCESSED SUB MESHES 
+		// (result of slicing for cur object, the sub meshes marked ad parent-child)
+		// ------
+		pSource->ClearChildren();
+		for (C3DObject* pFinalPart : vCurrentGeneration)
+		{
+			pFinalPart->SetObjectType(C3DObject::eOT_MeshParts);
+			pFinalPart->SetVisible(true);
+
+			pSource->AddChild(pFinalPart);
+
+			m_vObjects.push_back(pFinalPart);
+			++totalGeneratedParts;
+		}
+
+		// --- Hide source model ---
+		pSource->SetVisible(false);
+	}
+
+	m_bStructureChanged = true;
+	m_bModified = true;
+
+	Utils::ODS("[SCENE_PIPELINE] Cascading pipeline completed. Generated %zu sub-mesh parts from %zu slicers.",
+		totalGeneratedParts, vActiveSlicers.size());
 }
