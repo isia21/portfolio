@@ -8,7 +8,7 @@
 
 
 const int lInspWidth = 250;
-const int lInspHeight = 310;
+const int lInspHeight = 350;
 //const int lInspX = CApplication::GetInstance()->GetWidth() - lInspWidth - 10;
 
 CObjectInspectorPage::CObjectInspectorPage() :
@@ -106,6 +106,60 @@ void CObjectInspectorPage::Init()
 	m_pBtnDeleteObject = new CUIButton(6, 242, 238, 26, "Delete Entity", [this]() { ObjectDelete(); });
 	m_pBtnDeleteObject->SetHoverColor(0x8B0000FF);
 	AddChild(m_pBtnDeleteObject);
+
+
+	// ====================================================================
+	// --- Separator n OBJ loader---
+	// 1. Hor Separator
+	CUISeparator* pSep = new CUISeparator(6, 276, 238, 2, 0x454545FF);
+	AddChild(pSep);
+
+	// 2. Button Create from .OBJ
+	CUIButton* pBtnImportObj = new CUIButton(6, 286, 238, 26, "Create from file (*.obj)", [this]() {
+		CApplication* pApp = CApplication::GetInstance();
+		CWorld* pWorld = pApp->GetWorld();
+		
+		if (pWorld == nullptr || pWorld->GetScene() == nullptr)
+			return;
+
+		char szFilePath[MAX_PATH] = "";
+
+		OPENFILENAMEA ofn = {};
+		ofn.lStructSize = sizeof(ofn);
+		ofn.hwndOwner = pApp->GetWindowHandle();
+		ofn.lpstrFilter = "Wavefront OBJ 3D Model (*.obj)\0*.obj\0All Files (*.*)\0*.*\0";
+		ofn.lpstrFile = szFilePath;
+		ofn.nMaxFile = sizeof(szFilePath);
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+		ofn.lpstrTitle = "Import Wavefront OBJ Model";
+
+		if (GetOpenFileNameA(&ofn))
+		{
+			C3DObject* pNewObj = new C3DObject();
+			if (pNewObj->LoadFromOBJ(szFilePath))
+			{
+				// add new mesh to scene
+				pWorld->GetScene()->AddObject(pNewObj);
+
+				// select created mesh as current
+				pApp->SetSelectedObject(pNewObj);
+				pApp->GetScenePage()->RebuildSceneTree();
+				UpdateInspector();
+
+				Utils::ODS("[UI] Successfully imported OBJ model: %s", szFilePath);
+			}
+			else
+			{
+				delete pNewObj;
+				MessageBoxA(pApp->GetWindowHandle(), "Failed to parse OBJ file geometry.", "Import Error", MB_OK | MB_ICONERROR);
+			}
+		}
+		});
+
+	pBtnImportObj->SetNormalColor(0x204060FF);
+	pBtnImportObj->SetHoverColor(0x2E5B88FF);
+	pBtnImportObj->SetPressedColor(0x14283CFF);
+	AddChild(pBtnImportObj);
 }
 
 //====================================

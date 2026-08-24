@@ -20,7 +20,8 @@ enum ERenderLayer
 enum ERenderCommand2DType
 {
 	RENDER_COMMAND_RECT = 0,
-	RENDER_COMMAND_TEXT
+	RENDER_COMMAND_TEXT,
+	RENDER_COMMAND_LINE
 };
 
 
@@ -48,6 +49,14 @@ struct RenderCommand2D
 			int lFontSize;
 			ETextAlignment eAlignment;
 		} Text;
+
+		struct
+		{
+			int lX1, lY1;
+			int lX2, lY2;
+			unsigned int dwColor;
+			float fThickness;
+		} Line;
 	};
 };
 //-----------------------------------------------------------------------------
@@ -76,6 +85,7 @@ private:
 
 	void RenderRect(const RenderCommand2D& command);
 	void RenderText(const RenderCommand2D& command);
+	void RenderLine(const RenderCommand2D& command);
 
 public:
 	void SetCamera(CCamera* pCamera) { m_pCamera = pCamera; }
@@ -90,7 +100,7 @@ public:
 	void DrawRect(int lX, int lY, int lWidth, int lHeight, unsigned int dwColor);
 	void DrawText(int lX, int lY, const char* pszText, unsigned int dwColor, int lFontSize = 14, ETextAlignment eAlignment = TEXT_ALIGN_LEFT);
 	void DrawTextF(int lX, int lY, unsigned int dwColor, int lFontSize, ETextAlignment eAlignment, const char* pszFormat, ...);
-
+	void DrawLine(int lX1, int lY1, int lX2, int lY2, unsigned int dwColor, float fThickness = 2.0f);
 
 	void SetGridStep(float fStep);
 

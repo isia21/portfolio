@@ -417,7 +417,7 @@ void CMeshSlicer::SeparateDisconnectedIslands(
 		if (!islandTriangles.empty())
 		{
 			C3DObject* pPart = new C3DObject();
-			char szName[128] = {};
+			char szName[512] = {};
 			sprintf_s(szName, sizeof(szName), "%s_Part_%zu", sBaseName.c_str(), ++islandIndex);
 			pPart->SetName(szName);
 			pPart->SetModelColor(dwColor);

@@ -29,6 +29,12 @@ public:
 
 	float GetZoom() const { return m_fZoom; }
 
+	float GetPitch() const { return m_fPitch; }
+	float GetYaw() const { return m_fYaw; }
+
+	int GetViewportWidth() const { return m_lViewportWidth; }
+	int GetViewportHeight() const { return m_lViewportHeight; }
+
 private:
 	void UpdatePosition();
 

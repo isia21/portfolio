@@ -162,11 +162,13 @@
     <ClCompile Include="Engine\Graphics\Objects\3DObject.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Base\UIButton.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Base\UIElement.cpp" />
+    <ClCompile Include="Engine\Graphics\UI\Base\UISeparator.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Base\UISlider.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Base\UISmartTree.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Base\UITextBox.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Base\UIWindow.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Pages\ObjectInspectorPage.cpp" />
+    <ClCompile Include="Engine\Graphics\UI\Pages\ReadmePage.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Pages\ScenePage.cpp" />
     <ClCompile Include="Engine\Graphics\UI\UIManager.cpp" />
     <ClCompile Include="Engine\World.cpp" />
@@ -191,11 +193,13 @@
     <ClInclude Include="Engine\Graphics\UI\Base\defs.h" />
     <ClInclude Include="Engine\Graphics\UI\Base\UIButton.h" />
     <ClInclude Include="Engine\Graphics\UI\Base\UIElement.h" />
+    <ClInclude Include="Engine\Graphics\UI\Base\UISeparator.h" />
     <ClInclude Include="Engine\Graphics\UI\Base\UISlider.h" />
     <ClInclude Include="Engine\Graphics\UI\Base\UISmartTree.h" />
     <ClInclude Include="Engine\Graphics\UI\Base\UITextBox.h" />
     <ClInclude Include="Engine\Graphics\UI\Base\UIWindow.h" />
     <ClInclude Include="Engine\Graphics\UI\Pages\ObjectInspectorPage.h" />
+    <ClInclude Include="Engine\Graphics\UI\Pages\ReadmePage.h" />
     <ClInclude Include="Engine\Graphics\UI\Pages\ScenePage.h" />
     <ClInclude Include="Engine\Graphics\UI\UIManager.h" />
     <ClInclude Include="Engine\World.h" />

@@ -6,5 +6,6 @@
 #include "UI/Base/UIWindow.h"
 #include "UI/Base/UISmartTree.h"
 #include "UI/Base/UISlider.h"
+#include "UI/Base/UISeparator.h"
 
 #include "UI/UIManager.h"

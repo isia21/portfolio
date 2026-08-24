@@ -6,6 +6,7 @@
 
 #include "../Engine/Graphics/UI/Pages/ScenePage.h"
 #include "../Engine/Graphics/UI/Pages/ObjectInspectorPage.h"
+#include "../Engine/Graphics/UI/Pages/ReadmePage.h"
 
 #include "Application.h"
 
@@ -67,6 +68,13 @@ bool CApplication::Initialize(HINSTANCE hInstance)
 
 		m_pUIManager->AddElement(m_pFPSTextBox);
 
+
+		// --- Readme Page ---
+		{
+			m_pUIReadmePage = new CReadmePage();
+			m_pUIReadmePage->Init();
+			m_pUIManager->AddElement(m_pUIReadmePage);
+		}
 
 		// --- Create Scene Hierarchy & Slicing ---
 		{
@@ -225,6 +233,34 @@ void CApplication::Update()
 		return;
 	}
 
+	if (CKeyboard::GetInstance()->IsKeyPressed(VK_F1))
+		if (m_pUIReadmePage != nullptr)
+			m_pUIReadmePage->SetVisible(!m_pUIReadmePage->IsVisible());
+
+	if (CKeyboard::GetInstance()->IsKeyDown(VK_CONTROL))
+	{
+		bool bHooked = true;
+		CScenePage* pScenePage = GetScenePage();
+		if (CKeyboard::GetInstance()->IsKeyPressed('S'))
+			pScenePage->SceneSave();
+		else if (CKeyboard::GetInstance()->IsKeyPressed('O'))
+			pScenePage->SceneLoad();
+		else if (CKeyboard::GetInstance()->IsKeyPressed('N'))
+			pScenePage->SceneNew();
+		else if (CKeyboard::GetInstance()->IsKeyPressed('E'))
+			pScenePage->SceneExport();
+		else
+			bHooked = false;
+		
+		if (bHooked) 
+		{
+			CKeyboard::GetInstance()->ConsumeKey('S');
+			CKeyboard::GetInstance()->ConsumeKey('O');
+			CKeyboard::GetInstance()->ConsumeKey('N');
+			CKeyboard::GetInstance()->ConsumeKey('E');
+		}
+	}
+
 	// --- Update UI ---
 	// (can reset input states)
 	if (m_pUIManager != nullptr)
@@ -244,10 +280,6 @@ void CApplication::Update()
 		}
 	}
 
-	// Object transforms
-	// Animation
-	//
-	// This will later be separated from rendering.
 }
 
 void CApplication::Render()
@@ -268,6 +300,16 @@ void CApplication::Render()
 	// --- Render UI Canvas ---
 	if (m_pUIManager != nullptr)
 		m_pUIManager->Render(m_pRenderer);
+
+	// --- 2D Line of runtime slic ---
+	if (m_pWorld != nullptr && m_pWorld->IsCuttingGestureActive())
+	{
+		int x1, y1, x2, y2;
+		m_pWorld->GetCuttingLine(x1, y1, x2, y2);
+
+		m_pRenderer->DrawLine(x1, y1, x2, y2, 0xFF0033FF, 3.0f);
+	}
+
 
 	// --- Render all scene/frame data -- 
 	m_pRenderer->Render();

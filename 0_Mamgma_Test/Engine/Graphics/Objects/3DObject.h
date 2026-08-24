@@ -103,6 +103,7 @@ public:
 
 	// --- Serialization ---
 	bool LoadFromFile(const char* pszFilePath);
+	bool LoadFromOBJ(const char* pszFilePath);
 	bool SaveToFile(const char* pszFilePath);
 	bool ExportToOBJ(const char* pszFilePath);
 

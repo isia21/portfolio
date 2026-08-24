@@ -96,6 +96,12 @@
     <ClCompile Include="Engine\Graphics\UI\Base\UISlider.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Graphics\UI\Pages\ReadmePage.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\UI\Base\UISeparator.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -177,6 +183,12 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Graphics\UI\Base\UISlider.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\UI\Pages\ReadmePage.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\UI\Base\UISeparator.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

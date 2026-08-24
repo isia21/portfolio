@@ -493,10 +493,104 @@ void C3DObject::Render()
 //-----------------------------------------------------------------------------
 // Serialization
 //-----------------------------------------------------------------------------
+bool C3DObject::LoadFromOBJ(const char* pszFilePath)
+{
+	if (pszFilePath == nullptr || strlen(pszFilePath) == 0)
+		return false;
+
+	std::ifstream file(pszFilePath);
+	if (!file.is_open())
+	{
+		Utils::ODS("[OBJECT_ERROR] Failed to open OBJ file: %s", pszFilePath);
+		return false;
+	}
+
+	m_vVertices.clear();
+	m_vIndices.clear();
+
+	// --- Get filename WO ext ---
+	std::string sPath(pszFilePath);
+	size_t lastSlash = sPath.find_last_of("\\/");
+	std::string fileName = (lastSlash != std::string::npos) ? sPath.substr(lastSlash + 1) : sPath;
+	if (fileName.length() >= 4 && fileName.substr(fileName.length() - 4) == ".obj")
+		fileName = fileName.substr(0, fileName.length() - 4);
+	m_strName = fileName;
+
+	std::string line;
+	while (std::getline(file, line))
+	{
+		if (line.empty() || line[0] == '#')
+			continue;
+
+		std::istringstream ss(line);
+		std::string prefix;
+		ss >> prefix;
+
+		if (prefix == "o" || prefix == "g")
+		{
+			std::string objName;
+			ss >> objName;
+			if (!objName.empty())
+				m_strName = objName;
+		}
+		else if (prefix == "v")
+		{
+			Vertex3D v = {};
+			ss >> v.x >> v.y >> v.z;
+			v.dwColor = 0xFFFFFFFF; 
+			m_vVertices.push_back(v);
+		}
+		else if (prefix == "f")
+		{
+			std::vector<unsigned int> faceIndices;
+			std::string vertexStr;
+			while (ss >> vertexStr)
+			{
+				size_t firstSlash = vertexStr.find('/');
+				std::string vIdxStr = (firstSlash != std::string::npos) ? vertexStr.substr(0, firstSlash) : vertexStr;
+				if (!vIdxStr.empty())
+				{
+					int idx = std::stoi(vIdxStr);
+					if (idx > 0)
+						faceIndices.push_back(static_cast<unsigned int>(idx - 1));
+					else if (idx < 0) 
+						faceIndices.push_back(static_cast<unsigned int>(m_vVertices.size() + idx));
+				}
+			}
+
+			// --- Fan Triangulation for quads n N-edges ---
+			if (faceIndices.size() >= 3)
+			{
+				for (size_t i = 1; i + 1 < faceIndices.size(); ++i)
+				{
+					m_vIndices.push_back(faceIndices[0]);
+					m_vIndices.push_back(faceIndices[i]);
+					m_vIndices.push_back(faceIndices[i + 1]);
+				}
+			}
+		}
+	}
+
+	file.close();
+
+	m_eObjectType = eOT_SourceModel;
+	m_bVisible = true;
+	m_dwModelColor = 0x00FF88FF; // just mark some color
+
+	Utils::ODS("[OBJECT] Loaded Wavefront OBJ '%s' (Verts: %zu, Tris: %zu)", m_strName.c_str(), m_vVertices.size(), m_vIndices.size() / 3);
+	return !m_vVertices.empty();
+}
+
 bool C3DObject::LoadFromFile(const char* pszFilePath)
 {
 	if (pszFilePath == nullptr || strlen(pszFilePath) == 0)
 		return false;
+
+	std::string sPath(pszFilePath);
+	if (sPath.length() >= 4 && sPath.substr(sPath.length() - 4) == ".obj")
+	{
+		return LoadFromOBJ(pszFilePath);
+	}
 
 	pugi::xml_document doc;
 	pugi::xml_parse_result result = doc.load_file(pszFilePath);

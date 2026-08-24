@@ -13,11 +13,12 @@ private:
 	CUIButton* m_pBtnSceneLoad;
 	CUIButton* m_pBtnSceneSave;
 	CUIButton* m_pBtnSceneExport;
+public:
 	void SceneNew();
 	void SceneLoad();
 	void SceneSave();
 	void SceneExport();
-	
+private:
 	CUISmartTree* m_pSceneTree;
 
 	CUIButton* m_pBtnSlicerAdd;

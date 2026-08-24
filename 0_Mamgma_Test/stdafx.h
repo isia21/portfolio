@@ -27,5 +27,6 @@
 
 #include "Utils/Utils.h"
 #include "Utils/Singleton.h"
+#include "Engine/Math/Vector3.h"
 
 #include "../_3rdparty/pugixml/src/pugixml.hpp"

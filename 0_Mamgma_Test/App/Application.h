@@ -10,6 +10,8 @@ class CUIWindow;
 
 class CScenePage;
 class CObjectInspectorPage;
+class CReadmePage;
+
 
 
 class CApplication
@@ -90,6 +92,7 @@ private:
 	// --- UI Pages ---
 	CScenePage* m_pUIScenePage;
 	CObjectInspectorPage* m_pUIObjectInspectorPage;
+	CReadmePage* m_pUIReadmePage;
 
 public:
 	CWorld* GetWorld() const { return m_pWorld; }
@@ -97,6 +100,7 @@ public:
 	C3DObject* GetSelectedObject() const { return m_pSelectedObject; }
 	void SetSelectedObject(C3DObject* pObj) { /*if (pObj)*/ m_pSelectedObject = pObj; }
 
+	CReadmePage* GetReadmePage() const { return m_pUIReadmePage; }
 	CScenePage* GetScenePage() const { return m_pUIScenePage; }
 	CObjectInspectorPage* GetObjectInspectorPage() const { return m_pUIObjectInspectorPage; }
 };

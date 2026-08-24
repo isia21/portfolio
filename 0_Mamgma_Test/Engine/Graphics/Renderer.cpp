@@ -379,6 +379,19 @@ void CRenderer::DrawTextF(int lX, int lY, unsigned int dwColor, int lFontSize, E
 	DrawText(lX, lY, szBuffer, dwColor, lFontSize, eAlignment);
 }
 
+void CRenderer::DrawLine(int lX1, int lY1, int lX2, int lY2, unsigned int dwColor, float fThickness)
+{
+	RenderCommand2D cmd = {};
+	cmd.eType = RENDER_COMMAND_LINE;
+	cmd.Line.lX1 = lX1;
+	cmd.Line.lY1 = lY1;
+	cmd.Line.lX2 = lX2;
+	cmd.Line.lY2 = lY2;
+	cmd.Line.dwColor = dwColor;
+	cmd.Line.fThickness = fThickness;
+	m_vLayer2D.push_back(cmd);
+}
+
 //-----------------------------------------------------------------------------
 // 2D
 //-----------------------------------------------------------------------------
@@ -423,6 +436,11 @@ void CRenderer::Render2D()
 			RenderText(command);
 			break;
 
+		case RENDER_COMMAND_LINE:
+		{
+			RenderLine(command);
+			break;
+		}
 		default:
 			break;
 		}
@@ -441,6 +459,22 @@ void CRenderer::Render2D()
 	glMatrixMode(GL_MODELVIEW);
 }
 
+void CRenderer::RenderLine(const RenderCommand2D& command)
+{
+	const float fR = static_cast<float>((command.Line.dwColor >> 24) & 0xFF) / 255.0f;
+	const float fG = static_cast<float>((command.Line.dwColor >> 16) & 0xFF) / 255.0f;
+	const float fB = static_cast<float>((command.Line.dwColor >> 8) & 0xFF) / 255.0f;
+	const float fA = static_cast<float>(command.Line.dwColor & 0xFF) / 255.0f;
+	glColor4f(fR, fG, fB, fA);
+	glLineWidth(command.Line.fThickness);
+
+	glBegin(GL_LINES);
+	glVertex2i(command.Line.lX1, command.Line.lY1);
+	glVertex2i(command.Line.lX2, command.Line.lY2);
+	glEnd();
+
+	glLineWidth(1.0f);
+}
 void CRenderer::RenderRect(const RenderCommand2D& command)
 {
 	const float fR = static_cast<float>((command.Rect.dwColor >> 24) & 0xFF) / 255.0f;
