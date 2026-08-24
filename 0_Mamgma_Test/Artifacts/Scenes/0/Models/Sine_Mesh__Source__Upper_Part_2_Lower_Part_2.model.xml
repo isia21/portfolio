@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CADModel version="1.0" name="Sine Mesh (Source)_Upper_Part_2_Lower_Part_2">
+    <Properties color="0xFF00FFFF" renderType="Wireframe" visible="true" />
+    <Transform>
+        <Position x="-2.15532637" y="2.00827742" z="-3.77901173" />
+        <Rotation x="0" y="0" z="0" />
+        <Scale x="1" y="1" z="1" />
+    </Transform>
+    <Geometry verticesCount="22" trianglesCount="22">
+        <Vertices>
+                -0.0437 -0.0083 0.0948 0xFFFFFFFF
+                0.0282 0.0916 0.1315 0xFFFFFFFF
+                0.0366 0.0893 0.0687 0xFFFFFFFF
+                -0.1146 -0.0083 0.2340 0xFFFFFFFF
+                0.0020 0.0990 0.1961 0xFFFFFFFF
+                0.0272 -0.0083 -0.0444 0xFFFFFFFF
+                -0.0415 -0.0715 -0.0221 0xFFFFFFFF
+                -0.1182 -0.1117 0.0569 0xFFFFFFFF
+                -0.2538 -0.1290 0.1631 0xFFFFFFFF
+                0.0746 0.0786 -0.0203 0xFFFFFFFF
+                0.0073 0.0975 0.2962 0xFFFFFFFF
+                0.0853 0.0755 -0.0633 0xFFFFFFFF
+                0.1060 0.0088 -0.1796 0xFFFFFFFF
+                0.0791 -0.0083 -0.1462 0xFFFFFFFF
+                0.0025 -0.0537 -0.0570 0xFFFFFFFF
+                -0.2356 -0.1477 0.1274 0xFFFFFFFF
+                -0.2880 -0.1570 0.1457 0xFFFFFFFF
+                0.1308 0.0627 -0.1670 0xFFFFFFFF
+                0.1115 0.0130 -0.1880 0xFFFFFFFF
+                0.1334 0.0620 -0.1749 0xFFFFFFFF
+                0.1409 0.0598 -0.1975 0xFFFFFFFF
+                0.1703 0.0516 -0.2636 0xFFFFFFFF
+            </Vertices>
+        <Triangles>
+                0 1 2
+                0 3 4
+                0 4 1
+                5 0 2
+                0 5 6
+                0 6 7
+                8 0 7
+                0 8 3
+                5 2 9
+                3 10 4
+                5 9 11
+                12 5 11
+                5 13 14
+                5 12 13
+                5 14 6
+                8 7 15
+                8 15 16
+                12 11 17
+                18 12 17
+                18 17 19
+                18 19 20
+                18 20 21
+            </Triangles>
+    </Geometry>
+</CADModel>

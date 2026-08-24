@@ -18,4 +18,12 @@ private:
 
 	void ObjectToggleWireframe();
 	void ObjectDelete();
+
+
+	CUITextBox* m_pTxtRotX;
+	CUISlider* m_pSliderRotX;
+	CUITextBox* m_pTxtRotY;
+	CUISlider* m_pSliderRotY;
+	CUITextBox* m_pTxtRotZ;
+	CUISlider* m_pSliderRotZ;
 };

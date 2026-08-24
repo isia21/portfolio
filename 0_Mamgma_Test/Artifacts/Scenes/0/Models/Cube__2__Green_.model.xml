@@ -3,7 +3,7 @@
     <Properties color="0x00FF00FF" renderType="Solid" visible="false" />
     <Transform>
         <Position x="3" y="0" z="0" />
-        <Rotation x="0" y="45" z="0" />
+        <Rotation x="0" y="-49.5" z="0" />
         <Scale x="1" y="1" z="1" />
     </Transform>
     <Geometry verticesCount="8" trianglesCount="12">

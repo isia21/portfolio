@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CADModel version="1.0" name="Slicer #1">
-    <Properties color="0xFF005580" renderType="Solid" visible="true" />
+    <Properties color="0xFF005580" renderType="Wireframe" visible="true" />
     <Transform>
         <Position x="0" y="0" z="0" />
-        <Rotation x="0" y="0" z="0" />
+        <Rotation x="27" y="0" z="0" />
         <Scale x="1" y="1" z="1" />
     </Transform>
     <Geometry verticesCount="4" trianglesCount="4">

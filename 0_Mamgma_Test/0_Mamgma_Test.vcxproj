@@ -162,6 +162,7 @@
     <ClCompile Include="Engine\Graphics\Objects\3DObject.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Base\UIButton.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Base\UIElement.cpp" />
+    <ClCompile Include="Engine\Graphics\UI\Base\UISlider.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Base\UISmartTree.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Base\UITextBox.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Base\UIWindow.cpp" />
@@ -190,6 +191,7 @@
     <ClInclude Include="Engine\Graphics\UI\Base\defs.h" />
     <ClInclude Include="Engine\Graphics\UI\Base\UIButton.h" />
     <ClInclude Include="Engine\Graphics\UI\Base\UIElement.h" />
+    <ClInclude Include="Engine\Graphics\UI\Base\UISlider.h" />
     <ClInclude Include="Engine\Graphics\UI\Base\UISmartTree.h" />
     <ClInclude Include="Engine\Graphics\UI\Base\UITextBox.h" />
     <ClInclude Include="Engine\Graphics\UI\Base\UIWindow.h" />

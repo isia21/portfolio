@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CADModel version="1.0" name="Ground Plane_Upper_Part_1">
+    <Properties color="0x808080FF" renderType="Wireframe" visible="true" />
+    <Transform>
+        <Position x="1.98338234" y="-2" z="6.62512255" />
+        <Rotation x="0" y="0" z="0" />
+        <Scale x="1" y="1" z="1" />
+    </Transform>
+    <Geometry verticesCount="5" trianglesCount="3">
+        <Vertices>
+                8.0166 0.0000 3.3749 0xFFFFFFFF
+                1.9418 0.0000 -2.6999 0xFFFFFFFF
+                8.0166 0.0000 -2.6999 0xFFFFFFFF
+                -11.9834 0.0000 3.3749 0xFFFFFFFF
+                -11.9834 0.0000 -2.6999 0xFFFFFFFF
+            </Vertices>
+        <Triangles>
+                0 1 2
+                0 3 4
+                0 4 1
+            </Triangles>
+    </Geometry>
+</CADModel>

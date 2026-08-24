@@ -351,9 +351,24 @@ bool CScene::LoadFromFile(const char* pszFilePath)
 			continue;
 
 		std::string sFullModelPath = sBasePath + sSource;
+		std::string sType = inst.attribute("type").as_string("SourceModel");
 
-		// --- Create object and load its geometry from .model.xml ---
-		C3DObject* pObj = new C3DObject();
+		C3DObject* pObj = nullptr;
+
+		// --- Create correct object type ---
+		if (sType == "Slicer")
+		{
+			float fVisSize = inst.attribute("visualSize").as_float(12.0f);
+			CSlicer* pSlicer = new CSlicer(fVisSize);
+			pSlicer->SetObjectType(C3DObject::eOT_Slicer);
+			pObj = pSlicer;
+		}
+		else
+		{
+			pObj = new C3DObject();
+			pObj->SetObjectType(C3DObject::eOT_SourceModel);
+		}
+		
 		if (!pObj->LoadFromFile(sFullModelPath.c_str()))
 		{
 			Utils::ODS("[SCENE_WARN] Failed to load model file: %s", sFullModelPath.c_str());
@@ -452,6 +467,10 @@ bool CScene::SaveToFile(const char* pszFilePath)
 		if (pObj == nullptr)
 			continue;
 
+		// --- SKIP DAMN PARTS. ONLY SRC OBJ DATA n SLICERS ---
+		if (pObj->GetObjectType() == C3DObject::eOT_MeshParts)
+			continue;
+
 		const std::string sCleanName = SanitizeFileName(pObj->GetName());
 		const std::string sModelRelPath = "Models/" + sCleanName + ".model.xml";
 		const std::string sModelFullPath = sBasePath + sModelRelPath;
@@ -462,6 +481,21 @@ bool CScene::SaveToFile(const char* pszFilePath)
 		inst.append_attribute("id") = static_cast<unsigned int>(i);
 		inst.append_attribute("name") = pObj->GetName();
 		inst.append_attribute("source") = sModelRelPath.c_str();
+
+		// --- Пишем тип, чтобы при загрузке отличить Slicer от SourceModel ---
+		if (pObj->GetObjectType() == C3DObject::eOT_Slicer)
+		{
+			inst.append_attribute("type") = "Slicer";
+			CSlicer* pSlicer = dynamic_cast<CSlicer*>(pObj);
+			if (pSlicer != nullptr)
+			{
+				inst.append_attribute("visualSize") = pSlicer->GetVisualSize();
+			}
+		}
+		else
+		{
+			inst.append_attribute("type") = "SourceModel";
+		}
 
 		pugi::xml_node transform = inst.append_child("Transform");
 

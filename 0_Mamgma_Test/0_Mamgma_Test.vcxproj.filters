@@ -93,6 +93,9 @@
     <ClCompile Include="Engine\Graphics\UI\Pages\ObjectInspectorPage.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Graphics\UI\Base\UISlider.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -171,6 +174,9 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Graphics\UI\Pages\ObjectInspectorPage.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\UI\Base\UISlider.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CADModel version="1.0" name="Ground Plane_Lower_Part_1">
+    <Properties color="0x808080FF" renderType="Wireframe" visible="true" />
+    <Transform>
+        <Position x="-0.238839895" y="-2" z="-2.26376653" />
+        <Rotation x="0" y="0" z="0" />
+        <Scale x="1" y="1" z="1" />
+    </Transform>
+    <Geometry verticesCount="5" trianglesCount="3">
+        <Vertices>
+                -9.7612 0.0000 -7.7362 0xFFFFFFFF
+                10.2388 0.0000 -7.7362 0xFFFFFFFF
+                10.2388 0.0000 6.1890 0xFFFFFFFF
+                4.1641 0.0000 6.1890 0xFFFFFFFF
+                -9.7612 0.0000 6.1890 0xFFFFFFFF
+            </Vertices>
+        <Triangles>
+                0 1 2
+                0 2 3
+                0 3 4
+            </Triangles>
+    </Geometry>
+</CADModel>

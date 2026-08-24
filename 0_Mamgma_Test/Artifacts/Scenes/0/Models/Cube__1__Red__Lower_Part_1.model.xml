@@ -2,24 +2,24 @@
 <CADModel version="1.0" name="Cube #1 (Red)_Lower_Part_1">
     <Properties color="0xFF0000FF" renderType="Wireframe" visible="true" />
     <Transform>
-        <Position x="-3.02380967" y="-0.523809552" z="-0.0238095243" />
+        <Position x="-3.01167798" y="-0.535941064" z="-0.0238095243" />
         <Rotation x="0" y="0" z="0" />
         <Scale x="1" y="1" z="1" />
     </Transform>
     <Geometry verticesCount="12" trianglesCount="14">
         <Vertices>
-                -0.9762 -0.4762 1.0238 0xFFFFFFFF
-                1.0238 -0.4762 1.0238 0xFFFFFFFF
-                1.0238 0.5238 1.0238 0xFFFFFFFF
-                0.0238 0.5238 1.0238 0xFFFFFFFF
-                -0.9762 0.5238 1.0238 0xFFFFFFFF
-                -0.9762 -0.4762 -0.9762 0xFFFFFFFF
-                1.0238 -0.4762 -0.9762 0xFFFFFFFF
-                1.0238 0.5238 0.0238 0xFFFFFFFF
-                -0.9762 0.5238 0.0238 0xFFFFFFFF
-                0.0238 0.5238 -0.9762 0xFFFFFFFF
-                -0.9762 0.5238 -0.9762 0xFFFFFFFF
-                1.0238 0.5238 -0.9762 0xFFFFFFFF
+                -0.9883 -0.4641 1.0238 0xFFFFFFFF
+                1.0117 -0.4641 1.0238 0xFFFFFFFF
+                1.0117 0.0264 1.0238 0xFFFFFFFF
+                -0.4978 0.0264 1.0238 0xFFFFFFFF
+                -0.9883 0.0264 1.0238 0xFFFFFFFF
+                -0.9883 -0.4641 -0.9762 0xFFFFFFFF
+                1.0117 -0.4641 -0.9762 0xFFFFFFFF
+                1.0117 0.5359 0.0238 0xFFFFFFFF
+                -0.9883 0.5359 0.0238 0xFFFFFFFF
+                0.5212 1.0455 -0.9762 0xFFFFFFFF
+                -0.9883 1.0455 -0.9762 0xFFFFFFFF
+                1.0117 1.0455 -0.9762 0xFFFFFFFF
             </Vertices>
         <Triangles>
                 0 1 2
