@@ -236,29 +236,22 @@ void CApplication::Update()
 	if (CKeyboard::GetInstance()->IsKeyPressed(VK_F1))
 		if (m_pUIReadmePage != nullptr)
 			m_pUIReadmePage->SetVisible(!m_pUIReadmePage->IsVisible());
-
 	if (CKeyboard::GetInstance()->IsKeyDown(VK_CONTROL))
 	{
-		bool bHooked = true;
+		int consumedKey = 0;
 		CScenePage* pScenePage = GetScenePage();
-		if (CKeyboard::GetInstance()->IsKeyPressed('S'))
-			pScenePage->SceneSave();
-		else if (CKeyboard::GetInstance()->IsKeyPressed('O'))
-			pScenePage->SceneLoad();
-		else if (CKeyboard::GetInstance()->IsKeyPressed('N'))
-			pScenePage->SceneNew();
-		else if (CKeyboard::GetInstance()->IsKeyPressed('E'))
-			pScenePage->SceneExport();
-		else
-			bHooked = false;
-		
-		if (bHooked) 
-		{
-			CKeyboard::GetInstance()->ConsumeKey('S');
-			CKeyboard::GetInstance()->ConsumeKey('O');
-			CKeyboard::GetInstance()->ConsumeKey('N');
-			CKeyboard::GetInstance()->ConsumeKey('E');
-		}
+
+		if (CKeyboard::GetInstance()->IsKeyPressed('S'))		
+			{ pScenePage->SceneSave();			consumedKey = 'S'; }
+		else if (CKeyboard::GetInstance()->IsKeyPressed('O'))	
+			{ pScenePage->SceneLoad();			consumedKey = 'O'; }
+		else if (CKeyboard::GetInstance()->IsKeyPressed('N'))	
+			{ pScenePage->SceneNew();			consumedKey = 'N'; }
+		else if (CKeyboard::GetInstance()->IsKeyPressed('E'))	
+			{ pScenePage->SceneExport();		consumedKey = 'E'; }
+
+		if (consumedKey != 0)
+			CKeyboard::GetInstance()->ConsumeKey(consumedKey);
 	}
 
 	// --- Update UI ---

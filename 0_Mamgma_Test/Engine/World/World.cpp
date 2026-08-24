@@ -196,8 +196,10 @@ void CWorld::CreateSlicerFromScreenLine(int x1, int y1, int x2, int y2)
 	Vector3 spawnPos = camPos + (midRay * zoomDist);
 
 	// 4. Find kinfe rot angles (RotX, RotZ) by calced Normal
-	float rotZ = atan2f(-normal.x, normal.y) * 57.2957795f;
-	float rotX = atan2f(-normal.z, sqrtf(normal.x * normal.x + normal.y * normal.y)) * 57.2957795f;
+	//	float rotZ = atan2f(-normal.x, normal.y) * 57.2957795f;
+	//	float rotX = atan2f(-normal.z, sqrtf(normal.x * normal.x + normal.y * normal.y)) * 57.2957795f;
+	float rotX = atan2f(normal.z, normal.y) * MATH_RAD2DEG;
+	float rotZ = atan2f(-normal.x, sqrtf(normal.y * normal.y + normal.z * normal.z)) * MATH_RAD2DEG;
 
 	// 5. Create NEW Slicer/Knife on Scene
 	size_t slicerCount = 0;
