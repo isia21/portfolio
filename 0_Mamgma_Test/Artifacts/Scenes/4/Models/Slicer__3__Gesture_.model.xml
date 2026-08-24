@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CADModel version="1.0" name="Slicer #3 (Gesture)">
+    <Properties color="0xFF005580" renderType="Wireframe" visible="true" />
+    <Transform>
+        <Position x="-5.30885029" y="-1.76636314" z="1.76594543" />
+        <Rotation x="166.929092" y="0" z="65.8795013" />
+        <Scale x="1" y="1" z="1" />
+    </Transform>
+    <Geometry verticesCount="4" trianglesCount="4">
+        <Vertices>
+                -12.8615 0.0000 -12.8615 0xFFFFFFFF
+                12.8615 0.0000 -12.8615 0xFFFFFFFF
+                12.8615 0.0000 12.8615 0xFFFFFFFF
+                -12.8615 0.0000 12.8615 0xFFFFFFFF
+            </Vertices>
+        <Triangles>
+                0 1 2
+                0 2 3
+                0 2 1
+                0 3 2
+            </Triangles>
+    </Geometry>
+</CADModel>

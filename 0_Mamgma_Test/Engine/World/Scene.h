@@ -51,6 +51,8 @@ public:
 	void ExecuteSlicingPipeline();
 	void ClearMeshParts();
 
+	// --- Ray Casting nearest by Rat Object (Ray Origin + Ray Direction)
+	C3DObject* Raycast(const Vector3& rayOrigin, const Vector3& rayDir, float& outDist) const;
 private:
 	std::string m_strName;
 	std::string m_strFilePath;

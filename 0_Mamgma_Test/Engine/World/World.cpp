@@ -6,11 +6,17 @@
 #include "World.h"
 #include "Scene.h"
 
+#include "../Graphics/UI/Pages/ObjectInspectorPage.h"
+#include "../Graphics/UI/Pages/ScenePage.h"
+#include "../../App/Application.h"
+
+
 //-----------------------------------------------------------------------------
 // World
 //-----------------------------------------------------------------------------
 CWorld::CWorld()
 	: m_pCamera(nullptr), m_pScene(nullptr)
+	, m_pHoveredObject(nullptr)
 	, m_bIsCuttingGesture(false)
 	, m_lCutStartX(0), m_lCutStartY(0)
 	, m_lCutCurX(0), m_lCutCurY(0)
@@ -60,6 +66,51 @@ void CWorld::Update(float fDeltaTime)
 	// --- Runtime slicing by (CTRL + LBM Drag) ---
 	CKeyboard* pKb = CKeyboard::GetInstance();
 	CMouse* pMouse = CMouse::GetInstance();
+
+	// --- 3D RAY CAST / HOVER & SELECTION 
+	if (m_pCamera && m_pScene && pMouse)
+	{
+		const int mouseX = pMouse->GetX();
+		const int mouseY = pMouse->GetY();
+
+		Vector3 rayDir = UnprojectScreenToRay(mouseX, mouseY);
+		Vector3 camPos(m_pCamera->GetPosX(), m_pCamera->GetPosY(), m_pCamera->GetPosZ());
+
+		float hitDist = 0.0f;
+		C3DObject* pCurrentHovered = m_pScene->Raycast(camPos, rayDir, hitDist);
+
+		// --- Hovered object change detect (wo flood) ---
+		if (pCurrentHovered != m_pHoveredObject)
+		{
+			Utils::ODS("[HOVER] Cursor target changed: '%s' -> '%s'",
+				m_pHoveredObject ? m_pHoveredObject->GetName() : "None",
+				pCurrentHovered ? pCurrentHovered->GetName() : "None");
+
+			m_pHoveredObject = pCurrentHovered;
+		}
+
+		// --- LMB on hovered object == new CurSelObj --
+		// IGNORE IF kb.key.CTRL pressed
+		if (!pKb->IsKeyDown(VK_CONTROL) && pMouse->IsButtonPressed(CMouse::Button_Left))
+		{
+			CApplication* pApp = CApplication::GetInstance();
+			if (pApp)
+			{
+				pApp->SetSelectedObject(m_pHoveredObject);
+
+				if (pApp->GetObjectInspectorPage())
+					pApp->GetObjectInspectorPage()->UpdateInspector();
+
+				if (pApp->GetScenePage())
+					pApp->GetScenePage()->RebuildSceneTree();
+
+				if (m_pHoveredObject)
+					Utils::ODS("[PICK] Selected 3D Object: '%s'", m_pHoveredObject->GetName());
+				else
+					Utils::ODS("[PICK] Selection cleared (clicked empty space)");
+			}
+		}
+	}
 
 	if (pKb && pMouse)
 	{

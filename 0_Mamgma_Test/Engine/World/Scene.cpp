@@ -692,3 +692,85 @@ void CScene::ExecuteSlicingPipeline()
 	Utils::ODS("[SCENE_PIPELINE] Cascading pipeline completed. Generated %zu sub-mesh parts from %zu slicers.",
 		totalGeneratedParts, vActiveSlicers.size());
 }
+
+
+//-----------------------------------------------------------------------------
+// Ray Casting Object
+//-----------------------------------------------------------------------------
+
+// Additional func ray crossing tres (Meuller–Trumbore)
+static bool RayTriangleIntersect(
+	const Vector3& orig, const Vector3& dir,
+	const Vector3& v0, const Vector3& v1, const Vector3& v2,
+	float& outT)
+{
+	const float EPSILON = 1e-7f;
+	Vector3 edge1 = v1 - v0;
+	Vector3 edge2 = v2 - v0;
+	Vector3 h = dir.Cross(edge2);
+	float a = edge1.Dot(h);
+
+	if (a > -EPSILON && a < EPSILON)
+		return false; // ray parallel tres face 
+
+	float f = 1.0f / a;
+	Vector3 s = orig - v0;
+	float u = f * s.Dot(h);
+	if (u < 0.0f || u > 1.0f)
+		return false;
+
+	Vector3 q = s.Cross(edge1);
+	float v = f * dir.Dot(q);
+	if (v < 0.0f || u + v > 1.0f)
+		return false;
+
+	float t = f * edge2.Dot(q);
+	if (t > EPSILON)
+	{
+		outT = t;
+		return true;
+	}
+	return false;
+}
+
+C3DObject* CScene::Raycast(const Vector3& rayOrigin, const Vector3& rayDir, float& outDist) const
+{
+	C3DObject* pClosestObject = nullptr;
+	float minDistance = 1e9f;
+
+	for (C3DObject* pObj : m_vObjects)
+	{
+		if (pObj == nullptr || !pObj->IsVisible())
+			continue;
+
+		const auto& vertices = pObj->GetVertices();
+		const auto& indices = pObj->GetIndices();
+		if (vertices.empty() || indices.empty())
+			continue;
+
+		const Vector3 pos = pObj->GetPosition();
+		const Vector3 rot = pObj->GetRotation();
+		const Vector3 scale = pObj->GetScale();
+
+		// Check ray hit for every polygon
+		for (size_t i = 0; i + 2 < indices.size(); i += 3)
+		{
+			Vector3 v0 = TransformVertexToWorld(vertices[indices[i]], pos, rot, scale);
+			Vector3 v1 = TransformVertexToWorld(vertices[indices[i + 1]], pos, rot, scale);
+			Vector3 v2 = TransformVertexToWorld(vertices[indices[i + 2]], pos, rot, scale);
+
+			float t = 0.0f;
+			if (RayTriangleIntersect(rayOrigin, rayDir, v0, v1, v2, t))
+			{
+				if (t < minDistance)
+				{
+					minDistance = t;
+					pClosestObject = pObj;
+				}
+			}
+		}
+	}
+
+	outDist = minDistance;
+	return pClosestObject;
+}

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CADAssembly version="1.0" name="Default Test Scene">
+    <Metadata>
+        <Generator>MeshCut Studio CAD Core</Generator>
+        <Units>Millimeters</Units>
+        <UpAxis>Y</UpAxis>
+    </Metadata>
+    <ComponentInstances count="18">
+        <Instance id="0" name="Ground Plane" source="Models/Ground_Plane.model.xml" type="SourceModel">
+            <Transform>
+                <Position x="0" y="-2" z="0" />
+                <Rotation x="0" y="0" z="0" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Solid" color="0x808080FF" />
+        </Instance>
+        <Instance id="1" name="Cube #1 (Red)" source="Models/Cube__1__Red_.model.xml" type="SourceModel">
+            <Transform>
+                <Position x="-3" y="0" z="0" />
+                <Rotation x="0" y="0" z="0" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Solid" color="0xFF0000FF" />
+        </Instance>
+        <Instance id="2" name="Cube #2 (Green)" source="Models/Cube__2__Green_.model.xml" type="SourceModel">
+            <Transform>
+                <Position x="3" y="0" z="0" />
+                <Rotation x="0" y="45" z="0" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Solid" color="0x00FF00FF" />
+        </Instance>
+        <Instance id="3" name="Sphere #1 (Yellow)" source="Models/Sphere__1__Yellow_.model.xml" type="SourceModel">
+            <Transform>
+                <Position x="-2" y="0" z="4" />
+                <Rotation x="0" y="0" z="0" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Solid" color="0xFFFF00FF" />
+        </Instance>
+        <Instance id="4" name="Sphere #2 (Blue Wire)" source="Models/Sphere__2__Blue_Wire_.model.xml" type="SourceModel">
+            <Transform>
+                <Position x="2" y="1" z="4" />
+                <Rotation x="0" y="0" z="0" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Solid" color="0x0000FFFF" />
+        </Instance>
+        <Instance id="5" name="Sine Mesh (Source)" source="Models/Sine_Mesh__Source_.model.xml" type="SourceModel">
+            <Transform>
+                <Position x="0" y="2" z="-8" />
+                <Rotation x="0" y="0" z="0" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Solid" color="0xFF00FFFF" />
+        </Instance>
+        <Instance id="6" name="Slicer #1 (Gesture)" source="Models/Slicer__1__Gesture_.model.xml" type="Slicer" visualSize="12">
+            <Transform>
+                <Position x="-0.111586571" y="-0.474561691" z="0.465147018" />
+                <Rotation x="-150.834396" y="0" z="47.3584404" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Wireframe" color="0xFF005580" />
+        </Instance>
+        <Instance id="7" name="Slicer #2 (Gesture)" source="Models/Slicer__2__Gesture_.model.xml" type="Slicer" visualSize="25.7230663">
+            <Transform>
+                <Position x="2.90167999" y="-0.892398834" z="-3.50914764" />
+                <Rotation x="-107.559502" y="0" z="-29.9928951" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Wireframe" color="0xFF005580" />
+        </Instance>
+        <Instance id="8" name="Slicer #3 (Gesture)" source="Models/Slicer__3__Gesture_.model.xml" type="Slicer" visualSize="25.7230663">
+            <Transform>
+                <Position x="-5.30885029" y="-1.76636314" z="1.76594543" />
+                <Rotation x="166.929092" y="0" z="65.8795013" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Wireframe" color="0xFF005580" />
+        </Instance>
+        <Instance id="9" name="Slicer #4 (Gesture)" source="Models/Slicer__4__Gesture_.model.xml" type="Slicer" visualSize="25.7230663">
+            <Transform>
+                <Position x="-2.89569092" y="-2.38624763" z="-0.141674042" />
+                <Rotation x="-35.3222961" y="0" z="-65.0890884" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Wireframe" color="0xFF005580" />
+        </Instance>
+        <Instance id="10" name="Slicer #5 (Gesture)" source="Models/Slicer__5__Gesture_.model.xml" type="Slicer" visualSize="25.7230663">
+            <Transform>
+                <Position x="-5.93669701" y="-3.24894524" z="0.701564789" />
+                <Rotation x="43.9304619" y="0" z="-1.10823321" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Wireframe" color="0xFF005580" />
+        </Instance>
+        <Instance id="11" name="Slicer #6 (Gesture)" source="Models/Slicer__6__Gesture_.model.xml" type="Slicer" visualSize="25.7230663">
+            <Transform>
+                <Position x="-2.74101257" y="0.340557098" z="2.11635208" />
+                <Rotation x="-175.131012" y="0" z="49.1872063" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Wireframe" color="0xFF005580" />
+        </Instance>
+        <Instance id="12" name="Slicer #7 (Gesture)" source="Models/Slicer__7__Gesture_.model.xml" type="Slicer" visualSize="25.7230663">
+            <Transform>
+                <Position x="1.77198327" y="1.75128651" z="0.0850601196" />
+                <Rotation x="-178.833267" y="0" z="0.23491475" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Wireframe" color="0xFF005580" />
+        </Instance>
+        <Instance id="13" name="Slicer #8 (Gesture)" source="Models/Slicer__8__Gesture_.model.xml" type="Slicer" visualSize="25.7230663">
+            <Transform>
+                <Position x="-2.40888095" y="2.21230912" z="-0.0691070557" />
+                <Rotation x="3.29822445" y="0" z="-26.3365231" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Wireframe" color="0xFF005580" />
+        </Instance>
+        <Instance id="14" name="Slicer #9 (Gesture)" source="Models/Slicer__9__Gesture_.model.xml" type="Slicer" visualSize="25.7230663">
+            <Transform>
+                <Position x="-1.46327543" y="-0.488373041" z="-0.115629196" />
+                <Rotation x="-176.775406" y="0" z="-24.795145" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Wireframe" color="0xFF005580" />
+        </Instance>
+        <Instance id="15" name="Slicer #10 (Gesture)" source="Models/Slicer__10__Gesture_.model.xml" type="Slicer" visualSize="25.7230663">
+            <Transform>
+                <Position x="3.48488235" y="-5.32181454" z="-0.946275711" />
+                <Rotation x="16.7911472" y="0" z="31.607254" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Wireframe" color="0xFF005580" />
+        </Instance>
+        <Instance id="16" name="Slicer #11 (Gesture)" source="Models/Slicer__11__Gesture_.model.xml" type="Slicer" visualSize="25.7230663">
+            <Transform>
+                <Position x="7.5365963" y="-4.52879047" z="-1.36124039" />
+                <Rotation x="-155.105255" y="0" z="-44.9979897" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Wireframe" color="0xFF005580" />
+        </Instance>
+        <Instance id="17" name="Slicer #12 (Gesture)" source="Models/Slicer__12__Gesture_.model.xml" type="Slicer" visualSize="25.7230663">
+            <Transform>
+                <Position x="7.69160366" y="-2.79516578" z="-1.0536747" />
+                <Rotation x="5.1075902" y="0" z="-19.6729507" />
+                <Scale x="1" y="1" z="1" />
+            </Transform>
+            <RenderState visible="true" mode="Wireframe" color="0xFF005580" />
+        </Instance>
+    </ComponentInstances>
+</CADAssembly>
