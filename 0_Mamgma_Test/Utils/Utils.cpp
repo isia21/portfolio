@@ -105,5 +105,25 @@ namespace Utils {
 	}
 
 	void Init(HWND h) { hWnd = h; }
+
+
+	int MaxInt(int a, int b)
+	{
+		return a > b ? a : b;
+	}
+
+	int MinInt(int a, int b)
+	{
+		return a < b ? a : b;
+	}
+
+	int ClampInt(int value, int minValue, int maxValue)
+	{
+		if (value < minValue)
+			return minValue;
+		if (value > maxValue)
+			return maxValue;
+		return value;
+	}
 }
 

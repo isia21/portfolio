@@ -1,5 +1,9 @@
 #pragma once
 class CRenderer;
+
+// Fixed value for auto padding / rows sys
+const int UI_AUTO = -999999;
+
 //-----------------------------------------------------------------------------
 // UI Callback definitions
 //-----------------------------------------------------------------------------

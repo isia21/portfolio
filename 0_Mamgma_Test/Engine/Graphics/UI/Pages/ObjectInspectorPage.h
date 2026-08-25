@@ -26,4 +26,11 @@ private:
 	CUISlider* m_pSliderRotY;
 	CUITextBox* m_pTxtRotZ;
 	CUISlider* m_pSliderRotZ;
+
+	CUITextBox* m_pTxtPosX;
+	CUISlider* m_pSliderPosX;
+	CUITextBox* m_pTxtPosY;
+	CUISlider* m_pSliderPosY;
+	CUITextBox* m_pTxtPosZ;
+	CUISlider* m_pSliderPosZ;
 };

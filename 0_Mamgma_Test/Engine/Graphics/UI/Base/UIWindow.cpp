@@ -83,13 +83,110 @@ bool CUIWindow::IsPointInsideHeader(int lX, int lY) const
 		lY >= absY && lY <= (absY + m_lHeaderHeight));
 }
 
+int CUIWindow::GetContentBottomY() const
+{
+	int maxY = m_lHeaderHeight;
+	for (CUIElement* pChild : m_vChildren)
+	{
+		if (pChild != nullptr)
+		{
+			int bottom = pChild->GetY() + pChild->GetHeight();
+			if (bottom > maxY)
+				maxY = bottom;
+		}
+	}
+	return maxY;
+}
+
 void CUIWindow::AddChild(CUIElement* pChild)
 {
 	if (pChild == nullptr)
 		return;
 
+	// auto Y pos
+	if (pChild->GetY() == UI_AUTO || pChild->GetY() <= -999900)
+	{
+		int nextY = GetContentBottomY() + m_lPaddingY;
+		pChild->SetPosition(pChild->GetX(), nextY);
+	}
+
+	// auto X pos
+	if (pChild->GetX() == UI_AUTO || pChild->GetX() <= -999900)
+	{
+		pChild->SetPosition(m_lPaddingX, pChild->GetY());
+	}
+
+	// auto Width (window width)
+	if (pChild->GetWidth() == UI_AUTO || pChild->GetWidth() <= -999900)
+	{
+		const int autoWidth = m_lWidth - (m_lPaddingX * 2);
+		pChild->SetSize(autoWidth, pChild->GetHeight());
+	}
+
 	pChild->SetParent(this);
 	m_vChildren.push_back(pChild);
+}
+
+void CUIWindow::AddChild(const std::vector<CUIElement*>& vRow)
+{
+	if (vRow.empty())
+		return;
+
+	std::vector<CUIElement*> validElements;
+	for (CUIElement* pElem : vRow)
+	{
+		if (pElem != nullptr)
+			validElements.push_back(pElem);
+	}
+
+	if (validElements.empty())
+		return;
+
+	// 1. Calc common row Y
+	const int rowY = GetContentBottomY() + m_lPaddingY;
+
+	// 2. Calc widths (Flexbox logic)
+	const int totalAvailableWidth = m_lWidth - (m_lPaddingX * 2);
+	const int totalGapsWidth = static_cast<int>(validElements.size() - 1) * m_lPaddingX;
+
+	int fixedWidthSum = 0;
+	int autoWidthCount = 0;
+
+	for (CUIElement* pElem : validElements)
+	{
+		if (pElem->GetWidth() == UI_AUTO || pElem->GetWidth() <= -999900)
+			autoWidthCount++;
+		else
+			fixedWidthSum += pElem->GetWidth();
+	}
+
+	
+	const int remainingWidth = totalAvailableWidth - fixedWidthSum - totalGapsWidth;
+	const int autoItemWidth = (autoWidthCount > 0) ? /*std::max*/Utils::MaxInt(10, remainingWidth / autoWidthCount) : 0;
+
+	// 3. Set pos for elems in row l->r
+	int curX = m_lPaddingX;
+	for (CUIElement* pElem : validElements)
+	{
+		if (pElem->GetWidth() == UI_AUTO || pElem->GetWidth() <= -999900)
+		{
+			pElem->SetSize(autoItemWidth, pElem->GetHeight());
+		}
+
+		int elemX = (pElem->GetX() == UI_AUTO || pElem->GetX() <= -999900) ? curX : pElem->GetX();
+		int elemY = (pElem->GetY() == UI_AUTO || pElem->GetY() <= -999900) ? rowY : pElem->GetY();
+
+		pElem->SetPosition(elemX, elemY);
+		pElem->SetParent(this);
+		m_vChildren.push_back(pElem);
+
+		curX = elemX + pElem->GetWidth() + m_lPaddingX;
+	}
+}
+
+void CUIWindow::AddChild(std::initializer_list<CUIElement*> list)
+{
+	AddChild(std::vector<CUIElement*>(list));
 }
 
 void CUIWindow::RemoveChild(CUIElement* pChild)

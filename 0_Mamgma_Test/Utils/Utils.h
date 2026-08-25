@@ -8,6 +8,11 @@ namespace Utils {
 
 	int Message(const char* str, ...);
 	void ODS(const char* str, ...);
+
+	int MaxInt(int a, int b);
+	int MinInt(int a, int b);
+	int ClampInt(int value, int minValue, int maxValue);
+
 }
 
 #define SAFEDELETE(op)         if (op) { delete op;op=NULL;}

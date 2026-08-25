@@ -26,7 +26,17 @@ public:
 	//	virtual bool OnMouseUp(int lMouseX, int lMouseY, int lButton) override;
 	//	virtual bool OnMouseWheel(int lMouseX, int lMouseY, int zDelta) override;
 public:
+	// - Add single elem (Vertical Stack)
 	void AddChild(CUIElement* pChild);
+
+	// - Add array of elems aka ROW (Horizontal Row / Flexbox)
+	void AddChild(const std::vector<CUIElement*>& vRow);
+	void AddChild(std::initializer_list<CUIElement*> list);
+
+	// - just alias
+	void AddRow(std::initializer_list<CUIElement*> list) { AddChild(list); }
+	void AddRow(const std::vector<CUIElement*>& vRow) { AddChild(vRow); }
+
 	void RemoveChild(CUIElement* pChild);
 	void ClearChildren();
 
@@ -47,6 +57,14 @@ public:
 protected:
 	bool IsPointInsideHeader(int lX, int lY) const;
 
+	// find bottom edge Y
+	int GetContentBottomY() const; 
+
+public:
+	void SetPadding(int lPadX, int lPadY) { m_lPaddingX = lPadX; m_lPaddingY = lPadY; }
+	int GetPaddingX() const { return m_lPaddingX; }
+	int GetPaddingY() const { return m_lPaddingY; }
+
 protected:
 	std::string m_szTitle;
 	int m_lHeaderHeight;
@@ -61,6 +79,10 @@ protected:
 	bool m_bDragging;
 	int m_lDragOffsetX;
 	int m_lDragOffsetY;
+
+	int m_lPaddingX = 6;
+	int m_lPaddingY = 6;
+
 
 	CUIButton* m_pBtnCollapse;
 	std::vector<CUIElement*> m_vChildren;
