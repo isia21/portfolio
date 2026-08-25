@@ -48,9 +48,6 @@
     <ClCompile Include="Engine\World\Scene.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="..\_3rdparty\pugixml\src\pugixml.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Graphics\Objects\Slicer.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
@@ -109,6 +106,9 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="App\TestDataGenerator.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\_3rdparty\pugixml\src\pugixml.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
