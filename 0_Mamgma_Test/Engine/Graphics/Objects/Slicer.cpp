@@ -246,23 +246,28 @@ void CMeshSlicer::SplitMeshByPlane(
 		const float d1 = distances[i1];
 		const float d2 = distances[i2];
 
-		const bool b0 = d0 >= 0.0f;
-		const bool b1 = d1 >= 0.0f;
-		const bool b2 = d2 >= 0.0f;
+		const float fEps = 1e-5f;
+		const int s0 = (d0 > fEps) ? 1 : ((d0 < -fEps) ? -1 : 0);
+		const int s1 = (d1 > fEps) ? 1 : ((d1 < -fEps) ? -1 : 0);
+		const int s2 = (d2 > fEps) ? 1 : ((d2 < -fEps) ? -1 : 0);
 
-		// СЛУЧАЙ 1: Треугольник целиком выше плоскости
-		if (b0 && b1 && b2)
+		// СЛУЧАЙ 1: Треугольник целиком снизу (или касается плоскости снизу)
+		if (s0 <= 0 && s1 <= 0 && s2 <= 0)
+		{
+			AddTriangle(outLowerVerts, outLowerIndices, v0, v1, v2);
+			continue;
+		}
+
+		// СЛУЧАЙ 2: Треугольник целиком сверху (или касается плоскости сверху)
+		if (s0 >= 0 && s1 >= 0 && s2 >= 0)
 		{
 			AddTriangle(outUpperVerts, outUpperIndices, v0, v1, v2);
 			continue;
 		}
 
-		// СЛУЧАЙ 2: Треугольник целиком ниже плоскости
-		if (!b0 && !b1 && !b2)
-		{
-			AddTriangle(outLowerVerts, outLowerIndices, v0, v1, v2);
-			continue;
-		}
+		const bool b0 = d0 >= 0.0f;
+		const bool b1 = d1 >= 0.0f;
+		const bool b2 = d2 >= 0.0f;
 
 		// СЛУЧАЙ 3: Треугольник пересекается плоскостью (1 вершина с одной стороны, 2 с другой)
 		// Находим "одиночную" вершину (lone vertex)

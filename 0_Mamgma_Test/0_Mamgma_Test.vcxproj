@@ -101,6 +101,7 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir);</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -141,6 +142,7 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir);</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)%(RelativeDir)\</ObjectFileName>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -158,6 +160,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="App\Application.cpp" />
+    <ClCompile Include="App\CommandLine.cpp" />
+    <ClCompile Include="App\TestDataGenerator.cpp" />
+    <ClCompile Include="App\Tests.cpp" />
     <ClCompile Include="Engine\Graphics.cpp" />
     <ClCompile Include="Engine\Graphics\Objects\3DObject.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Base\UIButton.cpp" />
@@ -188,6 +193,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App\Application.h" />
+    <ClInclude Include="App\CommandLine.h" />
+    <ClInclude Include="App\TestDataGenerator.h" />
+    <ClInclude Include="App\Tests.h" />
     <ClInclude Include="Engine\Graphics.h" />
     <ClInclude Include="Engine\Graphics\Objects\3DObject.h" />
     <ClInclude Include="Engine\Graphics\UI\Base\defs.h" />

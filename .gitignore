@@ -53,3 +53,11 @@ ipch/
 *.cachefile
 *.VC.db
 *.VC.VC.opendb
+
+
+
+# ==========================================
+#  Whitelist Deliverables (Поставлять как есть)
+# ==========================================
+!Deliverables/
+!Deliverables/**
