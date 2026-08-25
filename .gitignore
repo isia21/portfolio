@@ -61,3 +61,5 @@ ipch/
 # ==========================================
 !Deliverables/
 !Deliverables/**
+!Deliverables/bin/
+!Deliverables/bin/**
