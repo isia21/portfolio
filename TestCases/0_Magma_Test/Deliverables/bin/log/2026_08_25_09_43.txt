@@ -1,0 +1,104 @@
+[09:43:00.026]  =================
+[09:43:00.026]  === APP START ===
+[09:43:00.026]  =================
+
+
+[09:43:00.026] =================================================
+[09:43:00.026] [TESTS] STARTING AUTOMATED UNIT TEST SUITE...
+[09:43:00.026] =================================================
+[09:43:00.026] [TEST_RUN] Running: 1. SPlane Mathematical Primitives...
+[09:43:00.026] [TEST_OK] 1. SPlane Mathematical Primitives PASSED
+[09:43:00.026] [TEST_RUN] Running: 2. Non-intersecting Plane (Miss Condition)...
+[09:43:00.027] [SLICER] Plane does not intersect mesh ''. Slicing aborted.
+[09:43:00.027] [TEST_OK] 2. Non-intersecting Plane (Miss Condition) PASSED
+[09:43:00.027] [TEST_RUN] Running: 3. Cube Bisection (2 Slices Output)...
+[09:43:00.027] [SLICER] Mesh '' sliced into 2 independent sub-meshes!
+[09:43:00.027] [TEST_OK] 3. Cube Bisection (2 Slices Output) PASSED
+[09:43:00.027] [TEST_RUN] Running: 4. Non-Convex Wave Slicing (BFS Island Separation)...
+[09:43:00.035] [SLICER] Mesh '' sliced into 16 independent sub-meshes!
+[09:43:00.035] [TEST_OK] 4. Non-Convex Wave Slicing (BFS Island Separation) PASSED
+[09:43:00.035] [TEST_RUN] Running: 5. Tangent & Boundary Vertices Robustness...
+[09:43:00.035] [SLICER] Plane does not intersect mesh ''. Slicing aborted.
+[09:43:00.035] [TEST_OK] 5. Tangent & Boundary Vertices Robustness PASSED
+[09:43:00.035] [TEST_RUN] Running: 6. Slicer Euler Angles to Plane Normal...
+[09:43:00.035] [TEST_OK] 6. Slicer Euler Angles to Plane Normal PASSED
+[09:43:00.035] [TEST_RUN] Running: 7. Wavefront OBJ Export/Import Integrity...
+[09:43:00.040] [OBJECT] Exported Wavefront OBJ mesh 'Unit_Test_Sphere' to: temp_test_mesh.obj
+[09:43:00.056] [OBJECT] Loaded Wavefront OBJ 'Unit_Test_Sphere' (Verts: 561, Tris: 1024)
+[09:43:00.057] [TEST_OK] 7. Wavefront OBJ Export/Import Integrity PASSED
+[09:43:00.057] =================================================
+[09:43:00.057] [TESTS] RESULTS: 7 PASSED, 0 FAILED (Total: 7)
+[09:43:00.057] =================================================
+[09:43:00.061] [OBJECT] Loaded model 'Sphere_Test' (Verts: 561, Tris: 1024)
+[09:43:00.062] [SLICER] Mesh 'Sphere_Test' sliced into 2 independent sub-meshes!
+[09:43:00.065] [OBJECT] Exported Wavefront OBJ mesh 'Sphere_Test_Upper_Part_1' to: Out/out_sphere_diag_1.obj
+[09:43:00.067] [OBJECT] Exported Wavefront OBJ mesh 'Sphere_Test_Lower_Part_1' to: Out/out_sphere_diag_2.obj
+[09:43:00.149]  =================
+[09:43:00.149]  === APP START ===
+[09:43:00.149]  =================
+
+
+[09:43:00.149] =================================================
+[09:43:00.149] [TESTS] STARTING AUTOMATED UNIT TEST SUITE...
+[09:43:00.149] =================================================
+[09:43:00.149] [TEST_RUN] Running: 1. SPlane Mathematical Primitives...
+[09:43:00.149] [TEST_OK] 1. SPlane Mathematical Primitives PASSED
+[09:43:00.149] [TEST_RUN] Running: 2. Non-intersecting Plane (Miss Condition)...
+[09:43:00.149] [SLICER] Plane does not intersect mesh ''. Slicing aborted.
+[09:43:00.149] [TEST_OK] 2. Non-intersecting Plane (Miss Condition) PASSED
+[09:43:00.149] [TEST_RUN] Running: 3. Cube Bisection (2 Slices Output)...
+[09:43:00.149] [SLICER] Mesh '' sliced into 2 independent sub-meshes!
+[09:43:00.149] [TEST_OK] 3. Cube Bisection (2 Slices Output) PASSED
+[09:43:00.149] [TEST_RUN] Running: 4. Non-Convex Wave Slicing (BFS Island Separation)...
+[09:43:00.160] [SLICER] Mesh '' sliced into 16 independent sub-meshes!
+[09:43:00.160] [TEST_OK] 4. Non-Convex Wave Slicing (BFS Island Separation) PASSED
+[09:43:00.160] [TEST_RUN] Running: 5. Tangent & Boundary Vertices Robustness...
+[09:43:00.160] [SLICER] Plane does not intersect mesh ''. Slicing aborted.
+[09:43:00.160] [TEST_OK] 5. Tangent & Boundary Vertices Robustness PASSED
+[09:43:00.160] [TEST_RUN] Running: 6. Slicer Euler Angles to Plane Normal...
+[09:43:00.160] [TEST_OK] 6. Slicer Euler Angles to Plane Normal PASSED
+[09:43:00.160] [TEST_RUN] Running: 7. Wavefront OBJ Export/Import Integrity...
+[09:43:00.165] [OBJECT] Exported Wavefront OBJ mesh 'Unit_Test_Sphere' to: temp_test_mesh.obj
+[09:43:00.179] [OBJECT] Loaded Wavefront OBJ 'Unit_Test_Sphere' (Verts: 561, Tris: 1024)
+[09:43:00.179] [TEST_OK] 7. Wavefront OBJ Export/Import Integrity PASSED
+[09:43:00.179] =================================================
+[09:43:00.179] [TESTS] RESULTS: 7 PASSED, 0 FAILED (Total: 7)
+[09:43:00.179] =================================================
+[09:43:00.180] [OBJECT] Loaded Wavefront OBJ 'Cube_Test' (Verts: 8, Tris: 12)
+[09:43:00.180] [SLICER] Plane does not intersect mesh 'Cube_Test'. Slicing aborted.
+[09:43:00.181] [OBJECT] Exported Wavefront OBJ mesh 'Cube_Test' to: Out/out_cube_miss_1.obj
+[09:43:00.259]  =================
+[09:43:00.259]  === APP START ===
+[09:43:00.259]  =================
+
+
+[09:43:00.259] =================================================
+[09:43:00.259] [TESTS] STARTING AUTOMATED UNIT TEST SUITE...
+[09:43:00.259] =================================================
+[09:43:00.259] [TEST_RUN] Running: 1. SPlane Mathematical Primitives...
+[09:43:00.259] [TEST_OK] 1. SPlane Mathematical Primitives PASSED
+[09:43:00.259] [TEST_RUN] Running: 2. Non-intersecting Plane (Miss Condition)...
+[09:43:00.259] [SLICER] Plane does not intersect mesh ''. Slicing aborted.
+[09:43:00.259] [TEST_OK] 2. Non-intersecting Plane (Miss Condition) PASSED
+[09:43:00.259] [TEST_RUN] Running: 3. Cube Bisection (2 Slices Output)...
+[09:43:00.259] [SLICER] Mesh '' sliced into 2 independent sub-meshes!
+[09:43:00.259] [TEST_OK] 3. Cube Bisection (2 Slices Output) PASSED
+[09:43:00.259] [TEST_RUN] Running: 4. Non-Convex Wave Slicing (BFS Island Separation)...
+[09:43:00.268] [SLICER] Mesh '' sliced into 16 independent sub-meshes!
+[09:43:00.268] [TEST_OK] 4. Non-Convex Wave Slicing (BFS Island Separation) PASSED
+[09:43:00.268] [TEST_RUN] Running: 5. Tangent & Boundary Vertices Robustness...
+[09:43:00.268] [SLICER] Plane does not intersect mesh ''. Slicing aborted.
+[09:43:00.268] [TEST_OK] 5. Tangent & Boundary Vertices Robustness PASSED
+[09:43:00.268] [TEST_RUN] Running: 6. Slicer Euler Angles to Plane Normal...
+[09:43:00.268] [TEST_OK] 6. Slicer Euler Angles to Plane Normal PASSED
+[09:43:00.268] [TEST_RUN] Running: 7. Wavefront OBJ Export/Import Integrity...
+[09:43:00.272] [OBJECT] Exported Wavefront OBJ mesh 'Unit_Test_Sphere' to: temp_test_mesh.obj
+[09:43:00.286] [OBJECT] Loaded Wavefront OBJ 'Unit_Test_Sphere' (Verts: 561, Tris: 1024)
+[09:43:00.287] [TEST_OK] 7. Wavefront OBJ Export/Import Integrity PASSED
+[09:43:00.287] =================================================
+[09:43:00.287] [TESTS] RESULTS: 7 PASSED, 0 FAILED (Total: 7)
+[09:43:00.287] =================================================
+[09:43:00.289] [OBJECT] Loaded Wavefront OBJ 'Cube_Test' (Verts: 8, Tris: 12)
+[09:43:00.289] [SLICER] Mesh 'Cube_Test' sliced into 2 independent sub-meshes!
+[09:43:00.290] [OBJECT] Exported Wavefront OBJ mesh 'Cube_Test_Upper_Part_1' to: Out/out_cube_txt_plane_1.obj
+[09:43:00.291] [OBJECT] Exported Wavefront OBJ mesh 'Cube_Test_Lower_Part_1' to: Out/out_cube_txt_plane_2.obj
