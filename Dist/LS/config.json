@@ -1,0 +1,21 @@
+{
+  "webHost": "0.0.0.0",
+  "webPort": 8080,
+  "tcpEchoPort": 9000,
+  "autoOpenBrowser": true,
+  "sessionTtlHours": 168,
+  "users": [
+    {
+      "username": "admin",
+      "role": "Admin",
+      "salt": "04bb55e0e5107938f4f2e5f3741cc447",
+      "passwordHash": "46a1c2bd1436a3d2cccee47695aeeb49add11093f983302cec8adcf28d39a24c"
+    },
+    {
+      "username": "guest",
+      "role": "Guest",
+      "salt": "ea1da529959af5ee3918ce91991238ef",
+      "passwordHash": "920adef44a650823e50050fc8f933712e14e1d7edba9762102bf642d49080699"
+    }
+  ]
+}

@@ -3,5 +3,11 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="TestCases/0_Magma_Test/0_Mamgma_Test.vcxproj" Id="ba9e8b29-c91d-401d-8464-19213914fff7" />
+  <Folder Name="/Other/">
+    <Project Path="Other/LS/LS.vcxproj" Id="a625fcd0-073b-40f4-a34e-c472bb8be26e" />
+  </Folder>
+  <Folder Name="/TestCases/">
+    <Project Path="TestCases/0_Magma_Test/0_Mamgma_Test.vcxproj" Id="ba9e8b29-c91d-401d-8464-19213914fff7" />
+  </Folder>
+
 </Solution>

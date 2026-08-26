@@ -63,3 +63,11 @@ ipch/
 !Deliverables/**
 !Deliverables/bin/
 !Deliverables/bin/**
+
+
+# --- Ignore some folders from 3rdparty ---
+_3rdparty/mongoose/tutorials/
+_3rdparty/mongoose/test/
+
+# --- Ignore Others dir ---
+Other/
