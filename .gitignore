@@ -71,3 +71,5 @@ _3rdparty/mongoose/test/
 
 # --- Ignore Others dir ---
 Other/
+LS/
+Intermediate/
