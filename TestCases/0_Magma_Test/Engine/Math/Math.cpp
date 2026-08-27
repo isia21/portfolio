@@ -145,3 +145,72 @@ void SliceTriangle(const Vector3& vM0, const Vector3& vN, const Triangle& tri, s
 		}
 	}
 }
+
+
+void RotateVertexByDegs_ZYX(Vector3& vVertex, const Vector3& vRotDegs)
+{
+	// Вращение в 3D сводится к последовательному 2D-повороту координат в перпендикулярной оси плоскости:
+	// 
+	// Математическая база 2D-поворота на угол theta:
+	//   new_u = u * cos(theta) - v * sin(theta)
+	//   new_v = u * sin(theta) + v * cos(theta)
+	
+	// 1. Вокруг Z: меняются (X, Y), координата Z константа.
+	if(vRotDegs.z != 0.0f)
+	{
+		const float fRotRadsZ = vRotDegs.z * MATH_DEG2RAD;
+		const float fRotCosZ = cosf(fRotRadsZ);
+		const float fRotSinZ = sinf(fRotRadsZ);
+		const float fNewPosX = (vVertex.x * fRotCosZ) - (vVertex.y * fRotSinZ);
+		const float fNewPosY = (vVertex.x * fRotSinZ) + (vVertex.y * fRotCosZ);
+		vVertex.x = fNewPosX;
+		vVertex.y = fNewPosY;
+	}
+	// 2. Вокруг Y: меняются (X, Z), координата Y константа.
+	if (vRotDegs.y != 0.0f)
+	{
+		const float fRotRadsY = vRotDegs.y * MATH_DEG2RAD;
+		const float fRotCosY = cosf(fRotRadsY);
+		const float fRotSinY = sinf(fRotRadsY);
+		const float fNewPosX = (vVertex.x * fRotCosY) - (vVertex.z * fRotSinY);
+		const float fNewPosZ = (vVertex.x * fRotSinY) + (vVertex.z * fRotCosY);
+		vVertex.x = fNewPosX;
+		vVertex.z = fNewPosZ;
+	}
+	// 3. Вокруг X: меняются (Y, Z), координата X константа.
+	if (vRotDegs.x != 0.0f)
+	{
+		const float fRotRadsX = vRotDegs.x * MATH_DEG2RAD;
+		const float fRotCosX = cosf(fRotRadsX);
+		const float fRotSinX = sinf(fRotRadsX);
+		const float fNewPosY = (vVertex.y * fRotCosX) - (vVertex.z * fRotSinX);
+		const float fNewPosZ = (vVertex.y * fRotSinX) + (vVertex.z * fRotCosX);
+		vVertex.y = fNewPosY;
+		vVertex.z = fNewPosZ;
+	}
+}
+
+Vector3 LocalToWorldPos(const Vector3& vIn, const Vector3& vTrs, const Vector3& vRot, const Vector3& vScl)
+{
+	//Порядок трансформации SRT
+	Vector3 vWorldPos = { vIn.x, vIn.y, vIn.z };
+	
+	//1. Scale - масштабируем точку
+	//	vWorldPos.x *= vScl.x;
+	//	vWorldPos.y *= vScl.y;
+	//	vWorldPos.z *= vScl.z;
+	//Или используем НОВЫЙ перегруженный оператор Vector3& operator*=(const Vector3& other)
+	vWorldPos *= vScl;
+
+	//2. Rotate - вращаем тчоку
+	RotateVertexByDegs_ZYX(vWorldPos, vRot);
+
+	//3. Translate - смещаем точку
+	//	vWorldPos.x += vTrs.x;
+	//	vWorldPos.y += vTrs.y;
+	//	vWorldPos.z += vTrs.z;
+	//Или используем СТАРЫЙ перегруженный оператор Vector3& operator+=(const Vector3& other)
+	vWorldPos += vTrs;
+
+	return vWorldPos;
+}
