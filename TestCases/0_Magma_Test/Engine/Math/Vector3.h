@@ -1,4 +1,5 @@
 #pragma once
+struct Vertex3D;
 
 //-----------------------------------------------------------------------------
 // 3D vector
@@ -12,6 +13,8 @@ struct Vector3
 public:
 	Vector3();
 	Vector3(float x, float y, float z);
+	//Конвертирующий конструктор
+	Vector3(const Vertex3D& vertex);
 
 public:
 	void Set(float x, float y, float z);

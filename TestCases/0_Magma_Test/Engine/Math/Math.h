@@ -5,9 +5,10 @@ struct Vertex3D;
 
 struct Triangle {
 	Vector3 vertices[3];
-    Triangle(Vertex3D& v0, Vertex3D& v1, Vertex3D& v2);
-    Triangle(Vector3& v0, Vector3& v1, Vector3& v2);
-    
+    DWORD colors[3];
+
+    Triangle(const Vertex3D& v0, const Vertex3D& v1, const Vertex3D& v2);
+    //Triangle(const Vector3& v0, const Vector3& v1, const Vector3& v2);
 };
 
 class C3DObject;
@@ -120,6 +121,22 @@ int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, 
 /// <param name="vNormalRot">Rotation/Вращение/Куда смотрит Yup нормаль (в градусах)</param>
 /// <returns>Возвращает кол-во созданных дочерних мешей (если заданая плоскость разрезала/попала в вершины pIn)</returns>
 int SliceMeshYup(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vAnchorTrs, const Vector3& vNormalRot);
+
+
+/// <summary>
+/// Нарезает исходный меш pIn, вершины которого находятся в локальных координатах, но переводятся в глобальный координаты, согласно Transform data.
+/// Считаем Якорь заданым в локальных координатах (0,0,0)
+/// Считаем Нормально заданой Строго вверх (0,1,0 -- Yup)
+/// Созданные новые меши сразу подключаются как дочерние к исходному pIn
+/// </summary>
+/// <param name="pIn">Исходный меш</param>
+/// <param name="vMeshTrs">Mesh.Transform.Translation</param>
+/// <param name="vMeshRot">Mesh.Transform.Rotation</param>
+/// <param name="vMeshScl">Mesh.Transform.Scale</param>
+/// <param name="vAnchorTrs">Translation/Смещение якоря</param>
+/// <param name="vNormalRot">Rotation/Вращение/Куда смотрит Yup нормаль (в градусах)</param>
+/// <returns>Возвращает кол-во созданных дочерних мешей (если заданая плоскость разрезала/попала в вершины pIn)</returns>
+std::vector<Vector3> CreateIslands(const std::vector<Vector3> & v);
 
 
 

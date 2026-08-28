@@ -45,15 +45,59 @@ int PointSide(const Vector3& vM0, const Vector3& vN, const Vector3& vP, float fE
 		return 0;
 }
 
-Vector3 IntersectPlane(const Vector3& vM0, const Vector3& vN, const Vector3& vP0, const Vector3& vP1) 
+#define D3DCOLOR_ARGB(a,r,g,b) \
+    ((unsigned long)((((a)&0xff)<<24)|(((r)&0xff)<<16)|(((g)&0xff)<<8)|((b)&0xff)))
+
+Vertex3D IntersectPlane(const Vector3& vM0, const Vector3& vN, const Vertex3D& vP0, const Vertex3D& vP1)
 {
-	float fDist0 = PointPlaneDistance(vM0, vN, vP0);
-	float fDist1 = PointPlaneDistance(vM0, vN, vP1);
+	Vector3 v3P0 = vP0;
+	Vector3 v3P1 = vP1;
+
+	float fDist0 = PointPlaneDistance(vM0, vN, v3P0);
+	float fDist1 = PointPlaneDistance(vM0, vN, v3P1);
 
 	// Параметр t пропорционального деления отрезка [0..1]
 	float t = fDist0 / (fDist0 - fDist1);
 
-	return vP0 + (vP1 - vP0) * t;
+	// Рассчет новой промежуточной 3D точки
+	Vector3 v3Out = v3P0 + (v3P1 - v3P0) * t;
+
+	// Рассчет нового промежуточного цвета для созданной точки
+	
+	/*	Интерполяция цвета.
+	Данный способ работы с DWORD ARGB перенесен из моего legacy-проекта, где цвет вершины/материала исторически представлен как 32-bit DWORD в формате D3DCOLOR_ARGB.
+	
+	Аналогичная логика использовалась в AnimColor: ARGB DWORD -> извлечение каналов через mask/shift -> интерполяция каналов -> сборка обратно в DWORD.
+	
+	При необходимости могу предоставить соответствующий фрагмент legacy-кода для подтверждения происхождения данной реализации.
+	*/
+	DWORD dwFrameAColor = vP0.dwColor;
+	DWORD dwFrameBColor = vP1.dwColor;
+
+	float fAA = (float)((dwFrameAColor & 0xFF000000) >> 24);
+	float fRA = (float)((dwFrameAColor & 0x00FF0000) >> 16);
+	float fGA = (float)((dwFrameAColor & 0x0000FF00) >> 8);
+	float fBA = (float)(dwFrameAColor & 0x000000FF);
+
+	float fAB = (float)((dwFrameBColor & 0xFF000000) >> 24);
+	float fRB = (float)((dwFrameBColor & 0x00FF0000) >> 16);
+	float fGB = (float)((dwFrameBColor & 0x0000FF00) >> 8);
+	float fBB = (float)(dwFrameBColor & 0x000000FF);
+
+	DWORD dwA = (DWORD)(fAA + (fAB - fAA) * t);
+	if (dwA > 255) dwA = 255;
+	DWORD dwR = (DWORD)(fRA + (fRB - fRA) * t);
+	if (dwR > 255) dwR = 255;
+	DWORD dwG = (DWORD)(fGA + (fGB - fGA) * t);
+	if (dwG > 255) dwG = 255;
+	DWORD dwB = (DWORD)(fBA + (fBB - fBA) * t);
+	if (dwB > 255) dwB = 255;
+	DWORD dwNewColor = D3DCOLOR_ARGB(dwA, dwR, dwG, dwB);
+
+	// Создаем новую вершину из найденной позиции от t и найденного цвета от t
+	Vertex3D v3DOut = { v3Out.x, v3Out.y, v3Out.z, dwNewColor };
+
+	return v3DOut;
 }
 
 void SliceTriangle(const Vector3& vM0, const Vector3& vN, const Triangle& tri, std::vector<Triangle>& vAboveTris, std::vector<Triangle>& vBelowTris, float fEpsilon)
@@ -94,16 +138,26 @@ void SliceTriangle(const Vector3& vM0, const Vector3& vN, const Triangle& tri, s
 	// То попробуем их разрезать
 	// 
 	// --- Временные буферы "новых" полигонов
-	std::vector<Vector3> frontPoly;
-	std::vector<Vector3> backPoly;
+	std::vector<Vertex3D> frontPoly;
+	std::vector<Vertex3D> backPoly;
 	for (int i = 0; i < 3; i++)
 	{
 		int lCurVertexOffset = i;
 		int lNextVertexOffset = (i + 1) % 3;
 
 		// Определяем текущую и след точку/вершину
-		const Vector3& pA = tri.vertices[lCurVertexOffset];
-		const Vector3& pB = tri.vertices[lNextVertexOffset];
+		const Vertex3D& pA = { 
+			tri.vertices[lCurVertexOffset].x,
+			tri.vertices[lCurVertexOffset].y,
+			tri.vertices[lCurVertexOffset].z,
+			tri.colors[lCurVertexOffset] 
+		};
+		const Vertex3D& pB = { 
+			tri.vertices[lNextVertexOffset].x,
+			tri.vertices[lNextVertexOffset].y,
+			tri.vertices[lNextVertexOffset].z,
+			tri.colors[lNextVertexOffset] 
+		};
 		// Фиксируем их дистанцию от нашей плоскости
 		float fDistA = fDists[lCurVertexOffset];
 		float fDistB = fDists[lNextVertexOffset];
@@ -125,7 +179,7 @@ void SliceTriangle(const Vector3& vM0, const Vector3& vN, const Triangle& tri, s
 			(eSideA == ePointSide::ePS_Below && eSideB == ePointSide::ePS_Above))
 		{
 			// Находим точную точку пересечения на ребре AB
-			Vector3 pNewDot = IntersectPlane(vM0, vN, pA, pB);
+			Vertex3D pNewDot = IntersectPlane(vM0, vN, pA, pB);
 
 			// Точка пересечения pNewDot находится строго на плоскости, добавляем в оба полигона
 			frontPoly.push_back(pNewDot);
@@ -192,7 +246,7 @@ void RotateVertexByDegs_ZYX(Vector3& vVertex, const Vector3& vRotDegs)
 	}
 }
 
-Vector3 LocalToWorldPos(const Vector3& vIn, const Vector3& vTrs, const Vector3& vRot, const Vector3& vScl)
+Vertex3D LocalToWorldPos(const Vertex3D& vIn, const Vector3& vTrs, const Vector3& vRot, const Vector3& vScl)
 {
 	//Порядок трансформации SRT
 	Vector3 vWorldPos = { vIn.x, vIn.y, vIn.z };
@@ -214,24 +268,30 @@ Vector3 LocalToWorldPos(const Vector3& vIn, const Vector3& vTrs, const Vector3& 
 	//Или используем СТАРЫЙ перегруженный оператор Vector3& operator+=(const Vector3& other)
 	vWorldPos += vTrs;
 
-	return vWorldPos;
+	return { vWorldPos.x,vWorldPos.y, vWorldPos.z, vIn.dwColor };
 }
 
 
-Triangle::Triangle(Vertex3D& v0, Vertex3D& v1, Vertex3D& v2)
+Triangle::Triangle(const Vertex3D& v0, const Vertex3D& v1, const Vertex3D& v2)
 {
 	vertices[0] = { v0.x, v0.y, v0.z };
 	vertices[1] = { v1.x, v1.y, v1.z };
 	vertices[2] = { v2.x, v2.y, v2.z };
+
+	colors[0] = v0.dwColor;
+	colors[1] = v1.dwColor;
+	colors[2] = v2.dwColor;
 }
 
-Triangle::Triangle(Vector3& v0, Vector3& v1, Vector3& v2)
-{
-	vertices[0] = v0; vertices[1] = v1; vertices[2] = v2;
-}
+//	Triangle::Triangle(const Vector3& v0, const Vector3& v1, const Vector3& v2)
+//	{
+//		vertices[0] = v0; vertices[1] = v1; vertices[2] = v2;
+//	}
 
-int SliceMeshYup(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vAnchorTrs, const Vector3& vNormalRot)
+int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vM0, const Vector3& vN)
 {
+	const float fEpsilon = 1e-5f;
+
 	//1. Для начала мы должны очистить возможный предыдуший результат нарезки
 	pIn.ClearChildren();
 
@@ -245,13 +305,27 @@ int SliceMeshYup(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRo
 		unsigned int i1 = vSrcIndnices[(lTrsIdx * 3) + 1];
 		unsigned int i2 = vSrcIndnices[(lTrsIdx * 3) + 2];
 		
-		const Vertex3D& v0 = vSrcVertices[i0];
-		const Vertex3D& v1 = vSrcVertices[i1];
-		const Vertex3D& v2 = vSrcVertices[i2];
+		//Сразу приводим Локальные коорд к Мировым
+		const Vertex3D& v0 = LocalToWorldPos(vSrcVertices[i0], vMeshTrs, vMeshRot, vMeshScl);
+		const Vertex3D& v1 = LocalToWorldPos(vSrcVertices[i1], vMeshTrs, vMeshRot, vMeshScl);
+		const Vertex3D& v2 = LocalToWorldPos(vSrcVertices[i2], vMeshTrs, vMeshRot, vMeshScl);
 
 		//emplace_back, вместо push_back, т.к. emplace_back вызывает конструктор структуры
 		vSrcTres.emplace_back(v0, v1, v2);
 	}
+
+	//3. Нарезаем исходные треугольники плоскостью
+	std::vector<Triangle> vAboveTres;
+	std::vector<Triangle> vBelowTres;
+
+	for (const auto& tSrcTriangle : vSrcTres)
+		SliceTriangle(vM0, vN, tSrcTriangle, vAboveTres, vBelowTres, fEpsilon);
+		
+
+	//4. Собираем нарезанные вершины в саб меши
+	std::vector<std::vector<Triangle>> vAboveMeshes;
+	std::vector<std::vector<Triangle>> vBelowMeshes;
+
 }
 
 int SliceMeshYup(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vAnchorTrs, const Vector3& vNormalRot)

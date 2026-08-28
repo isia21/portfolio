@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "../Graphics.h"
 #include "Vector3.h"
 
 //-----------------------------------------------------------------------------
@@ -16,6 +17,11 @@ Vector3::Vector3(float x, float y, float z)
 	, z(z)
 {}
 
+Vector3::Vector3(const Vertex3D& vertex)
+	: x(vertex.x)
+	, y(vertex.y)
+	, z(vertex.z)
+{}
 
 //-----------------------------------------------------------------------------
 // Set
