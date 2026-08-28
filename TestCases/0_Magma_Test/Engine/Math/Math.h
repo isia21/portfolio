@@ -90,6 +90,7 @@ Vector3 LocalToWorldPos(const Vector3& vIn, const Vector3& vTrs, const Vector3& 
 /// <summary>
 /// Нарезает исходный меш pIn, вершины которого находятся в локальных координатах, но переводятся в глобальный координаты, согласно Transform data.
 /// Считаем Якорь и Нормаль переданной в Мировых координатах.
+/// Созданные новые меши сразу подключаются как дочерние к исходному pIn
 /// </summary>
 /// <param name="pIn">Исходный меш</param>
 /// <param name="vMeshTrs">Mesh.Transform.Translation</param>
@@ -97,14 +98,15 @@ Vector3 LocalToWorldPos(const Vector3& vIn, const Vector3& vTrs, const Vector3& 
 /// <param name="vMeshScl">Mesh.Transform.Scale</param>
 /// <param name="vM0">Исходня точка плоскости M0 в глобальных координатах</param>
 /// <param name="vN">Нормаль плоскости</param>
-/// <returns>Возвращает массив новых мешей (если заданая плоскость разрезала/попала в вершины pIn)</returns>
-std::vector<C3DObject*> SliceMesh(const C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vM0, const Vector3& vN);
+/// <returns>Возвращает кол-во созданных дочерних мешей (если заданая плоскость разрезала/попала в вершины pIn)</returns>
+int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vM0, const Vector3& vN);
 
 
 /// <summary>
 /// Нарезает исходный меш pIn, вершины которого находятся в локальных координатах, но переводятся в глобальный координаты, согласно Transform data.
 /// Считаем Якорь заданым в локальных координатах (0,0,0)
 /// Считаем Нормально заданой Строго вверх (0,1,0 -- Yup)
+/// Созданные новые меши сразу подключаются как дочерние к исходному pIn
 /// </summary>
 /// <param name="pIn">Исходный меш</param>
 /// <param name="vMeshTrs">Mesh.Transform.Translation</param>
@@ -112,8 +114,8 @@ std::vector<C3DObject*> SliceMesh(const C3DObject& pIn, const Vector3& vMeshTrs,
 /// <param name="vMeshScl">Mesh.Transform.Scale</param>
 /// <param name="vAnchorTrs">Translation/Смещение якоря</param>
 /// <param name="vNormalRot">Rotation/Вращение/Куда смотрит Yup нормаль (в градусах)</param>
-/// <returns>Возвращает массив новых мешей (если заданая плоскость разрезала/попала в вершины pIn)</returns>
-std::vector<C3DObject*> SliceMesh(const C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vAnchorTrs, const Vector3& vNormalRot);
+/// <returns>Возвращает кол-во созданных дочерних мешей (если заданая плоскость разрезала/попала в вершины pIn)</returns>
+int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vAnchorTrs, const Vector3& vNormalRot);
 
 
 
