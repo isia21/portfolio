@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Vector3.h"
 #include "Math.h"
+#include "../Graphics.h"
+
 
 float PointPlaneDistance(const Vector3& vM0, const Vector3& vN, const Vector3& vP)
 {
@@ -213,4 +215,56 @@ Vector3 LocalToWorldPos(const Vector3& vIn, const Vector3& vTrs, const Vector3& 
 	vWorldPos += vTrs;
 
 	return vWorldPos;
+}
+
+
+Triangle::Triangle(Vertex3D& v0, Vertex3D& v1, Vertex3D& v2)
+{
+	vertices[0] = { v0.x, v0.y, v0.z };
+	vertices[1] = { v1.x, v1.y, v1.z };
+	vertices[2] = { v2.x, v2.y, v2.z };
+}
+
+Triangle::Triangle(Vector3& v0, Vector3& v1, Vector3& v2)
+{
+	vertices[0] = v0; vertices[1] = v1; vertices[2] = v2;
+}
+
+int SliceMeshYup(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vAnchorTrs, const Vector3& vNormalRot)
+{
+	//1. Для начала мы должны очистить возможный предыдуший результат нарезки
+	pIn.ClearChildren();
+
+	//2. Собираем массив треугольников исходного меша
+	std::vector<Triangle> vSrcTres;
+	const std::vector<Vertex3D>& vSrcVertices = pIn.GetVertices();
+	const std::vector<unsigned int>& vSrcIndnices = pIn.GetIndices();
+	for (int lTrsIdx = 0; lTrsIdx < pIn.GetTriangleCount(); lTrsIdx++)
+	{
+		unsigned int i0 = vSrcIndnices[(lTrsIdx * 3) + 0];
+		unsigned int i1 = vSrcIndnices[(lTrsIdx * 3) + 1];
+		unsigned int i2 = vSrcIndnices[(lTrsIdx * 3) + 2];
+		
+		const Vertex3D& v0 = vSrcVertices[i0];
+		const Vertex3D& v1 = vSrcVertices[i1];
+		const Vertex3D& v2 = vSrcVertices[i2];
+
+		//emplace_back, вместо push_back, т.к. emplace_back вызывает конструктор структуры
+		vSrcTres.emplace_back(v0, v1, v2);
+	}
+}
+
+int SliceMeshYup(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vAnchorTrs, const Vector3& vNormalRot)
+{
+	//Якорь - в абсолютно нуле
+	Vector3 vM0(0, 0, 0);
+	//Нормаль - строго вверх Yup
+	Vector3 vN(0, 1, 0);
+
+	//Смещаям якорь на заданный Translation
+	vM0 += vAnchorTrs;
+	//Вращаем Yup нормаль на заданные градусы вращения
+	RotateVertexByDegs_ZYX(vN, vNormalRot);
+
+	return SliceMesh(pIn, vMeshTrs, vMeshRot, vMeshScl, vM0, vN);
 }

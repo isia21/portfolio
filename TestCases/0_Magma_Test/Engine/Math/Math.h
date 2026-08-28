@@ -1,9 +1,13 @@
 #pragma once
 
 struct Vector3;
+struct Vertex3D;
 
 struct Triangle {
 	Vector3 vertices[3];
+    Triangle(Vertex3D& v0, Vertex3D& v1, Vertex3D& v2);
+    Triangle(Vector3& v0, Vector3& v1, Vector3& v2);
+    
 };
 
 class C3DObject;
@@ -115,7 +119,7 @@ int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, 
 /// <param name="vAnchorTrs">Translation/Смещение якоря</param>
 /// <param name="vNormalRot">Rotation/Вращение/Куда смотрит Yup нормаль (в градусах)</param>
 /// <returns>Возвращает кол-во созданных дочерних мешей (если заданая плоскость разрезала/попала в вершины pIn)</returns>
-int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vAnchorTrs, const Vector3& vNormalRot);
+int SliceMeshYup(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vAnchorTrs, const Vector3& vNormalRot);
 
 
 
