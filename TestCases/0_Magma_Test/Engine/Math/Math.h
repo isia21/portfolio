@@ -6,6 +6,8 @@ struct Triangle {
 	Vector3 vertices[3];
 };
 
+class C3DObject;
+
 /// <summary>
 /// Реализация уравнения плоскости. 
 /// </summary>
@@ -85,7 +87,33 @@ void RotateVertexByDegs_ZYX(Vector3& vVertex, const Vector3& vRotDegs);
 Vector3 LocalToWorldPos(const Vector3& vIn, const Vector3& vTrs, const Vector3& vRot, const Vector3& vScl);
 
 
+/// <summary>
+/// Нарезает исходный меш pIn, вершины которого находятся в локальных координатах, но переводятся в глобальный координаты, согласно Transform data.
+/// Считаем Якорь и Нормаль переданной в Мировых координатах.
+/// </summary>
+/// <param name="pIn">Исходный меш</param>
+/// <param name="vMeshTrs">Mesh.Transform.Translation</param>
+/// <param name="vMeshRot">Mesh.Transform.Rotation</param>
+/// <param name="vMeshScl">Mesh.Transform.Scale</param>
+/// <param name="vM0">Исходня точка плоскости M0 в глобальных координатах</param>
+/// <param name="vN">Нормаль плоскости</param>
+/// <returns>Возвращает массив новых мешей (если заданая плоскость разрезала/попала в вершины pIn)</returns>
+std::vector<C3DObject*> SliceMesh(const C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vM0, const Vector3& vN);
 
+
+/// <summary>
+/// Нарезает исходный меш pIn, вершины которого находятся в локальных координатах, но переводятся в глобальный координаты, согласно Transform data.
+/// Считаем Якорь заданым в локальных координатах (0,0,0)
+/// Считаем Нормально заданой Строго вверх (0,1,0 -- Yup)
+/// </summary>
+/// <param name="pIn">Исходный меш</param>
+/// <param name="vMeshTrs">Mesh.Transform.Translation</param>
+/// <param name="vMeshRot">Mesh.Transform.Rotation</param>
+/// <param name="vMeshScl">Mesh.Transform.Scale</param>
+/// <param name="vAnchorTrs">Translation/Смещение якоря</param>
+/// <param name="vNormalRot">Rotation/Вращение/Куда смотрит Yup нормаль (в градусах)</param>
+/// <returns>Возвращает массив новых мешей (если заданая плоскость разрезала/попала в вершины pIn)</returns>
+std::vector<C3DObject*> SliceMesh(const C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vAnchorTrs, const Vector3& vNormalRot);
 
 
 
