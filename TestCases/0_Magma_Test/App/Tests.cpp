@@ -203,28 +203,57 @@ bool CUnitTester::TestCubeSliceSimple()
 // -----------------------------------------------------------------------------
 bool CUnitTester::TestSinePlaneMultipleIslands()
 {
-	// Создаем невыпуклую волнообразную поверхность (64x64 полигонов)
-	C3DObject* pSine = C3DObject::CreatePrimitive(C3DObject::ePR_SinePlane, 10.0f);
-	TEST_CHECK(pSine != nullptr, "Failed to create sine plane");
 
 	// Плоскость режет гребни волн по высоте Y = 0.5
-	SPlane cutPlane(Vector3(0.0f, 0.5f, 0.0f), Vector3(0.0f, 1.0f, 0.0f));
+	Vector3 vM0(0.0f, 0.5f, 0.0f);
+	Vector3 vN(0.0f, 1.0f, 0.0f);
 
-	std::vector<C3DObject*> generatedIslands;
-	bool bCutResult = CMeshSlicer::Slice(pSine, cutPlane, generatedIslands, true); // с разделением BFS
-
-	TEST_CHECK(bCutResult == true, "Slicing non-convex wave must succeed");
-	// При разрезе синусоиды на высоте Y=0.5 образуется множество изолированных верхушек волн
-	TEST_CHECK(generatedIslands.size() > 2, "Complex wave slice must produce multiple (>2) disconnected sub-meshes");
-
-	for (C3DObject* pIsland : generatedIslands)
 	{
-		TEST_CHECK(pIsland->GetVertexCount() > 0, "Each island must have vertices");
-		TEST_CHECK(pIsland->GetTriangleCount() > 0, "Each island must have triangles");
+		SPlane cutPlane(vM0, vN);
+		// Создаем невыпуклую волнообразную поверхность (64x64 полигонов)
+		C3DObject* pSine = C3DObject::CreatePrimitive(C3DObject::ePR_SinePlane, 10.0f);
+		TEST_CHECK(pSine != nullptr, "Failed to create sine plane");
+
+		std::vector<C3DObject*> generatedIslands;
+		bool bCutResult = CMeshSlicer::Slice(pSine, cutPlane, generatedIslands, true); // с разделением BFS
+
+		TEST_CHECK(bCutResult == true, "[OLD] Slicing non-convex wave must succeed");
+		// При разрезе синусоиды на высоте Y=0.5 образуется множество изолированных верхушек волн
+		TEST_CHECK(generatedIslands.size() > 2, "[OLD] Complex wave slice must produce multiple (>2) disconnected sub-meshes");
+
+		for (C3DObject* pIsland : generatedIslands)
+		{
+			TEST_CHECK(pIsland->GetVertexCount() > 0, "[OLD] Each island must have vertices");
+			TEST_CHECK(pIsland->GetTriangleCount() > 0, "[OLD] Each island must have triangles");
+		}
+
+		delete pSine;
+		for (auto p : generatedIslands) delete p;
 	}
 
-	delete pSine;
-	for (auto p : generatedIslands) delete p;
+	{
+		// Создаем невыпуклую волнообразную поверхность (64x64 полигонов)
+		C3DObject* pSine = C3DObject::CreatePrimitive(C3DObject::ePR_SinePlane, 10.0f);
+		TEST_CHECK(pSine != nullptr, "Failed to create sine plane");
+
+		int lNewPartsCount = SliceMesh(*pSine, pSine->GetPosition(), pSine->GetRotation(), pSine->GetScale(), vM0, vN);
+		const std::vector<C3DObject*>& generatedIslands = pSine->GetChildren();
+		bool bCutResult = lNewPartsCount > 0;
+
+		TEST_CHECK(bCutResult == true, "[NEW] Slicing non-convex wave must succeed");
+		// При разрезе синусоиды на высоте Y=0.5 образуется множество изолированных верхушек волн
+		TEST_CHECK(generatedIslands.size() > 2, "[NEW] Complex wave slice must produce multiple (>2) disconnected sub-meshes");
+
+		for (C3DObject* pIsland : generatedIslands)
+		{
+			TEST_CHECK(pIsland->GetVertexCount() > 0, "[NEW] Each island must have vertices");
+			TEST_CHECK(pIsland->GetTriangleCount() > 0, "[NEW] Each island must have triangles");
+		}
+
+		delete pSine;
+		for (auto p : generatedIslands) 
+			delete p;
+	}
 	return true;
 }
 
