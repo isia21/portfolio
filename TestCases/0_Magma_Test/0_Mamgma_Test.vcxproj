@@ -177,6 +177,7 @@
     <ClCompile Include="Engine\Graphics\UI\Pages\ReadmePage.cpp" />
     <ClCompile Include="Engine\Graphics\UI\Pages\ScenePage.cpp" />
     <ClCompile Include="Engine\Graphics\UI\UIManager.cpp" />
+    <ClCompile Include="Engine\Math\Math.cpp" />
     <ClCompile Include="Engine\World.cpp" />
     <ClCompile Include="Engine\Graphics\Camera.cpp" />
     <ClCompile Include="Engine\Input.cpp" />
@@ -216,6 +217,7 @@
     <ClInclude Include="Engine\Graphics\UI\Pages\ReadmePage.h" />
     <ClInclude Include="Engine\Graphics\UI\Pages\ScenePage.h" />
     <ClInclude Include="Engine\Graphics\UI\UIManager.h" />
+    <ClInclude Include="Engine\Math\Math.h" />
     <ClInclude Include="Engine\World.h" />
     <ClInclude Include="Engine\Graphics\Camera.h" />
     <ClInclude Include="Engine\Input.h" />

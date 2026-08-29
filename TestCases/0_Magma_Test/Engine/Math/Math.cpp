@@ -4,6 +4,8 @@
 #include "../Graphics.h"
 
 
+#include <queue>
+
 float PointPlaneDistance(const Vector3& vM0, const Vector3& vN, const Vector3& vP)
 {
 	/*
@@ -47,6 +49,21 @@ int PointSide(const Vector3& vM0, const Vector3& vN, const Vector3& vP, float fE
 
 #define D3DCOLOR_ARGB(a,r,g,b) \
     ((unsigned long)((((a)&0xff)<<24)|(((r)&0xff)<<16)|(((g)&0xff)<<8)|((b)&0xff)))
+
+
+Vector3 IntersectPlane(const Vector3& vM0, const Vector3& vN, const Vector3& vP0, const Vector3& vP1){
+
+	float fDist0 = PointPlaneDistance(vM0, vN, vP0);
+	float fDist1 = PointPlaneDistance(vM0, vN, vP1);
+
+	// Параметр t пропорционального деления отрезка [0..1]
+	float t = fDist0 / (fDist0 - fDist1);
+
+	// Рассчет новой промежуточной 3D точки
+	Vector3 v3Out = vP0 + (vP1 - vP0) * t;
+
+	return v3Out;
+}
 
 Vertex3D IntersectPlane(const Vector3& vM0, const Vector3& vN, const Vertex3D& vP0, const Vertex3D& vP1)
 {
@@ -288,6 +305,9 @@ Triangle::Triangle(const Vertex3D& v0, const Vertex3D& v1, const Vertex3D& v2)
 //		vertices[0] = v0; vertices[1] = v1; vertices[2] = v2;
 //	}
 
+
+
+
 int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vM0, const Vector3& vN)
 {
 	const float fEpsilon = 1e-5f;
@@ -323,9 +343,68 @@ int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, 
 		
 
 	//4. Собираем нарезанные вершины в саб меши
-	std::vector<std::vector<Triangle>> vAboveMeshes;
-	std::vector<std::vector<Triangle>> vBelowMeshes;
+	std::vector<std::vector<Triangle>> vAboveMeshes = CreateIslands(vAboveTres);
+	std::vector<std::vector<Triangle>> vBelowMeshes = CreateIslands(vBelowTres);
 
+
+	auto MakeNewObject = [](const std::vector<Triangle>& vObjTres) {
+		C3DObject *pObj = nullptr;
+
+		if (!vObjTres.empty())
+		{
+			pObj = new C3DObject();
+
+			int lTrIdx = 0;
+			for (auto &stT : vObjTres)
+			{
+				for (int lVertPos = 0; lVertPos < 3; lVertPos++) {
+					pObj->AddVertex({ stT.vertices[lVertPos].x,stT.vertices[lVertPos].y,stT.vertices[lVertPos].z,stT.colors[lVertPos] });
+					pObj->AddIndices(lTrIdx * 3 + lVertPos);
+				}
+				lTrIdx++;
+			}
+		}
+		return pObj;
+	};
+	int lRetTotalSubMeshesCount = 0;
+	auto PushSideNewObjects = [&](std::vector<std::vector<Triangle>> &vTres, /*std::string strPrefix*/const char * pszPrefix) {
+		static char szNewNameBuff[512];
+		int lCurSideMesh = 0;
+		for (const auto &vCurNewUpperMeshTres : vTres)
+		{
+			C3DObject* pObj = MakeNewObject(vCurNewUpperMeshTres);
+			if (pObj)
+			{
+				pObj->SetModelColor(pIn.GetModelColor());
+				//TODO: т.к. система координат внутри меша - локальная, нам необходимо создать 
+				//	Новый Translation оффсет, чтоб он совпадал со смешением исходного
+				//	Путем рассчета нового центроида = sum(v3[]) / count(v3[]);
+				
+				//sprintf(szNewNameBuff, "%s_%s_%d", pIn.GetName(), strPrefix.c_str(), lCurSideMesh);
+				sprintf_s(szNewNameBuff, sizeof(szNewNameBuff), "%s_%s_%d", pIn.GetName(), pszPrefix, lCurSideMesh);
+				pObj->SetName(szNewNameBuff);
+
+				//Выделяем меш визуально, путем его отрисовки через линии/грани, без заливки
+				pObj->SetRenderType(C3DObject::eRT_Wireframe);
+				pObj->SetVisible(true);
+
+				//Настраиваем связи дочернего саб меша к родительскому
+				pObj->SetParent(&pIn);
+				pIn.AddChild(pObj);
+
+				lRetTotalSubMeshesCount++;
+				lCurSideMesh++;
+			}
+		}
+	};
+
+	PushSideNewObjects(vAboveMeshes, "UP");
+	PushSideNewObjects(vBelowMeshes, "DN");
+	
+	if (lRetTotalSubMeshesCount)
+		pIn.SetVisible(false);
+
+	return lRetTotalSubMeshesCount;
 }
 
 int SliceMeshYup(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vAnchorTrs, const Vector3& vNormalRot)
@@ -341,4 +420,136 @@ int SliceMeshYup(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRo
 	RotateVertexByDegs_ZYX(vN, vNormalRot);
 
 	return SliceMesh(pIn, vMeshTrs, vMeshRot, vMeshScl, vM0, vN);
+}
+
+std::vector<std::vector<Triangle>> CreateIslands(const std::vector<Triangle>& vInTres)
+{
+	// BFS - обход графа в ширину (т.к. мы ищем связи)
+	//	https://www.youtube.com/watch?v=4iDv8Zu8L3I
+	//	https://habr.com/ru/articles/969450/
+	//	>https://en.wikipedia.org/wiki/Disjoint-set_data_structure#:~:text=%5B20%5D-,Applications,edit,-A%20demo%20for
+	//	https://en.wikipedia.org/wiki/Component_(graph_theory)
+
+
+	if (vInTres.empty()) 
+		return {};
+
+	const float fEpsilon = 1e-5f;
+
+	// Описание ребра из его 2-ух точек
+	struct stEdge {
+		Vector3 v0, v1;
+	};
+	// Проверка, являются ли 2 точки одной и той же с учетом допуска по точности
+	auto IsSamePoint = [fEpsilon](const Vector3& p1, const Vector3& p2) {
+		return 
+			(std::abs(p1.x - p2.x) <= fEpsilon) &&
+			(std::abs(p1.y - p2.y) <= fEpsilon) &&
+			(std::abs(p1.z - p2.z) <= fEpsilon);
+		};
+	// Проверка, являются ли 2 ребра одним и тем же
+	auto IsSameEdge = [&](const stEdge& e1, const stEdge& e2) {
+		return 
+			(IsSamePoint(e1.v0, e2.v0) && IsSamePoint(e1.v1, e2.v1)) ||
+			(IsSamePoint(e1.v0, e2.v1) && IsSamePoint(e1.v1, e2.v0));
+		};
+
+	// =========================================================================
+	// СТАДИЯ 1: СБОР УНИКАЛЬНЫХ РЕБЕР И СВЯЗЕЙ (Ребро -> Треугольники)
+	// =========================================================================
+	struct stEdgeEntry {
+		stEdge tEdge;
+		std::vector<int> vTrsIndices; // Индексы треугольников с этим ребром
+	};
+
+	std::vector<stEdgeEntry> edgeMap;
+
+	auto RegisterEdge = [&](const stEdge& newEdge, int triIndex) {
+		// Ищем, встречалось ли уже такое ребро
+		for (auto& entry : edgeMap) {
+			if (IsSameEdge(entry.tEdge, newEdge)) {
+				entry.vTrsIndices.push_back(triIndex);
+				return;
+			}
+		}
+		// Если ребро новое — создаем новую запись
+		edgeMap.push_back({ newEdge, { triIndex } });
+		};
+
+	// Проходим по всем треугольникам и регистрируем их стороны
+	for (int lCurTr = 0; lCurTr < static_cast<int>(vInTres.size()); ++lCurTr) {
+		const Triangle& t = vInTres[lCurTr];
+		RegisterEdge({ t.vertices[0], t.vertices[1]}, lCurTr);
+		RegisterEdge({ t.vertices[1], t.vertices[2]}, lCurTr);
+		RegisterEdge({ t.vertices[2], t.vertices[0]}, lCurTr);
+	}
+
+	// Хелпер: быстрый поиск соседей треугольника по построенной карте
+	auto GetNeighbors = [&](int triIdx) -> std::vector<int> {
+		std::vector<int> vNeighb;
+		const Triangle& t = vInTres[triIdx];
+		stEdge triEdges[3] = {
+			{ t.vertices[0], t.vertices[1] },
+			{ t.vertices[1], t.vertices[2] },
+			{ t.vertices[2], t.vertices[0] }
+		};
+
+		for (const auto& tCurEdge : triEdges) {
+			for (const auto& tCurEdgeEntry : edgeMap) {
+				if (IsSameEdge(tCurEdgeEntry.tEdge, tCurEdge)) {
+					for (int nIdx : tCurEdgeEntry.vTrsIndices) {
+						if (nIdx != triIdx) {
+							vNeighb.push_back(nIdx);
+						}
+					}
+					break;
+				}
+			}
+		}
+		return vNeighb;
+		};
+
+	// =========================================================================
+	// СТАДИЯ 2: ОБХОД И ПОИСК СВЯЗАННЫХ ОСТРОВОВ (BFS)
+	// =========================================================================
+	int totalTriangles = static_cast<int>(vInTres.size());
+	std::vector<bool> visited(totalTriangles, false);
+	std::vector<std::vector<Triangle>> islands;
+
+	for (int i = 0; i < totalTriangles; ++i)
+	{
+		if (visited[i]) continue;
+
+		// =====================================================================
+		// СТАДИЯ 3: СБОРКА ТРЕУГОЛЬНИКОВ ТЕКУЩЕГО ОСТРОВА
+		// =====================================================================
+		std::vector<Triangle> currentIsland;
+		std::queue<int> q;
+
+		q.push(i);
+		visited[i] = true;
+
+		while (!q.empty())
+		{
+			int curTriIdx = q.front();
+			q.pop();
+
+			currentIsland.push_back(vInTres[curTriIdx]);
+
+			// Добавляем всех не посещенных соседей через ребра
+			for (int neighborIdx : GetNeighbors(curTriIdx))
+			{
+				if (!visited[neighborIdx])
+				{
+					visited[neighborIdx] = true;
+					q.push(neighborIdx);
+				}
+			}
+		}
+
+		// Остров полностью изолирован и собран
+		islands.push_back(std::move(currentIsland));
+	}
+
+	return islands;
 }

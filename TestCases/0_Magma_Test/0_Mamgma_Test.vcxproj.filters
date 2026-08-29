@@ -111,6 +111,9 @@
     <ClCompile Include="..\..\_3rdparty\pugixml\src\pugixml.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Math\Math.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -207,6 +210,9 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="App\TestDataGenerator.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Math.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

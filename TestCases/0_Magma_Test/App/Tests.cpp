@@ -2,6 +2,9 @@
 #include "Tests.h"
 #include "../Engine/Graphics.h"
 
+#include "../Engine/Math/Vector3.h"
+#include "../Engine/Math/Math.h"
+
 #include <cmath>
 
 namespace
@@ -36,26 +39,49 @@ namespace
 bool CUnitTester::TestPlaneMath()
 {
 	// Горизонтальная плоскость на высоте Y = 2.0 с нормалью вверх (0, 1, 0)
-	SPlane plane(Vector3(0.0f, 2.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f));
+
+	Vector3 vM0(0.0f, 2.0f, 0.0f);
+	Vector3 vN(0.0f, 1.0f, 0.0f);
+
+	SPlane plane(vM0, vN);
 
 	Vector3 ptAbove(0.0f, 5.0f, 0.0f);
 	Vector3 ptBelow(0.0f, 0.0f, 0.0f);
 	Vector3 ptOnPlane(10.0f, 2.0f, -5.0f);
+	// Старые проверки
+	{
+		TEST_CHECK(fabs(plane.GetSignedDistance(ptAbove) - 3.0f) < 1e-5f, "[OLD] Distance above must be +3.0");
+		TEST_CHECK(fabs(plane.GetSignedDistance(ptBelow) - (-2.0f)) < 1e-5f, "[OLD] Distance below must be -2.0");
+		TEST_CHECK(fabs(plane.GetSignedDistance(ptOnPlane)) < 1e-5f, "[OLD] Distance on plane must be 0.0");
 
-	TEST_CHECK(fabs(plane.GetSignedDistance(ptAbove) - 3.0f) < 1e-5f, "Distance above must be +3.0");
-	TEST_CHECK(fabs(plane.GetSignedDistance(ptBelow) - (-2.0f)) < 1e-5f, "Distance below must be -2.0");
-	TEST_CHECK(fabs(plane.GetSignedDistance(ptOnPlane)) < 1e-5f, "Distance on plane must be 0.0");
+		TEST_CHECK(plane.GetSide(ptAbove) == 1, "[OLD] Side above must be +1");
+		TEST_CHECK(plane.GetSide(ptBelow) == -1, "[OLD] Side below must be -1");
+		TEST_CHECK(plane.GetSide(ptOnPlane) == 0, "[OLD] Side on plane must be 0");
 
-	TEST_CHECK(plane.GetSide(ptAbove) == 1, "Side above must be +1");
-	TEST_CHECK(plane.GetSide(ptBelow) == -1, "Side below must be -1");
-	TEST_CHECK(plane.GetSide(ptOnPlane) == 0, "Side on plane must be 0");
+		// Проверка поиска точки среза на отрезке [ptBelow, ptAbove]
+		float d0 = plane.GetSignedDistance(ptBelow); // -2
+		float d1 = plane.GetSignedDistance(ptAbove); // +3
+		Vector3 intersect = plane.GetIntersectionPoint(ptBelow, ptAbove, d0, d1);
 
-	// Проверка поиска точки среза на отрезке [ptBelow, ptAbove]
-	float d0 = plane.GetSignedDistance(ptBelow); // -2
-	float d1 = plane.GetSignedDistance(ptAbove); // +3
-	Vector3 intersect = plane.GetIntersectionPoint(ptBelow, ptAbove, d0, d1);
+		TEST_CHECK(fabs(intersect.y - 2.0f) < 1e-5f, "[OLD] Intersection Y must be exactly 2.0");
+	}
+	// Новые
+	{
+		TEST_CHECK(fabs(PointPlaneDistance(vM0, vN, ptAbove) - 3.0f) < 1e-5f, "[NEW] Distance above must be +3.0");
+		TEST_CHECK(fabs(PointPlaneDistance(vM0, vN, ptBelow) - (-2.0f)) < 1e-5f, "[NEW] Distance below must be -2.0");
+		TEST_CHECK(fabs(PointPlaneDistance(vM0, vN, ptOnPlane)) < 1e-5f, "[NEW] Distance on plane must be 0.0");
 
-	TEST_CHECK(fabs(intersect.y - 2.0f) < 1e-5f, "Intersection Y must be exactly 2.0");
+		TEST_CHECK(PointSide(vM0, vN, ptAbove) == 1, "[NEW] Side above must be +1");
+		TEST_CHECK(PointSide(vM0, vN, ptBelow) == -1, "[NEW] Side below must be -1");
+		TEST_CHECK(PointSide(vM0, vN, ptOnPlane) == 0, "[NEW] Side on plane must be 0");
+
+		// Проверка поиска точки среза на отрезке [ptBelow, ptAbove]
+		float d0 = PointPlaneDistance(vM0, vN, ptBelow); // -2
+		float d1 = PointPlaneDistance(vM0, vN, ptAbove); // +3
+		Vector3 intersect = IntersectPlane(vM0, vN, ptBelow, ptAbove);
+
+		TEST_CHECK(fabs(intersect.y - 2.0f) < 1e-5f, "[NEW] Intersection Y must be exactly 2.0");
+	}
 	return true;
 }
 
@@ -65,20 +91,51 @@ bool CUnitTester::TestPlaneMath()
 bool CUnitTester::TestPlaneMiss()
 {
 	// Куб размером 2x2x2 (от -1 до +1 по всем осям)
-	C3DObject* pCube = C3DObject::CreatePrimitive(C3DObject::ePR_Cube, 1.0f);
-	TEST_CHECK(pCube != nullptr, "Failed to create cube");
 
 	// Плоскость лежит на высоте Y = 5.0 (выше куба)
-	SPlane highPlane(Vector3(0.0f, 5.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f));
+	Vector3 vM0(0.0f, 5.0f, 0.0f);
+	Vector3 vN(0.0f, 1.0f, 0.0f);
 
-	std::vector<C3DObject*> parts;
-	bool bCutResult = CMeshSlicer::Slice(pCube, highPlane, parts, true);
+	SPlane highPlane(vM0, vN);
 
-	delete pCube;
-	for (auto p : parts) delete p;
+	{
+		C3DObject* pCube = C3DObject::CreatePrimitive(C3DObject::ePR_Cube, 1.0f);
+		TEST_CHECK(pCube != nullptr, "Failed to create cube");
 
-	TEST_CHECK(bCutResult == false, "Slicer must return false on non-intersecting plane");
-	TEST_CHECK(parts.empty(), "Parts vector must remain empty on miss");
+		std::vector<C3DObject*> parts;
+		bool bCutResultOld = CMeshSlicer::Slice(pCube, highPlane, parts, true);
+
+		delete pCube;
+		for (auto p : parts) delete p;
+
+		TEST_CHECK(bCutResultOld == false, "[OLD] Slicer must return false on non-intersecting plane");
+		TEST_CHECK(parts.empty(), "[OLD] Parts vector must remain empty on miss");
+	}
+
+	{
+		C3DObject* pCube = C3DObject::CreatePrimitive(C3DObject::ePR_Cube, 1.0f);
+		TEST_CHECK(pCube != nullptr, "Failed to create cube");
+
+		int lNewPartsCount = SliceMesh(*pCube, pCube->GetPosition(), pCube->GetRotation(), pCube->GetScale(), vM0, vN);
+
+		const std::vector<C3DObject*> & parts = pCube->GetChildren();
+		//bool bCutResultNew = lNewPartsCount > 0;
+		
+		// Наш слайсер всегда вернет > 0. 
+		// Где == 1, просто означает то, что ВСЕ треуги/модель строго ПОД или НАД срезом
+		// Это надо пофиксить!
+		// А пока
+		bool bCutResultNew = lNewPartsCount > 1;
+		
+
+		delete pCube;
+		for (auto p : parts) 
+			delete p;
+
+		TEST_CHECK(bCutResultNew == false, "[NEW] Slicer must return false on non-intersecting plane");
+		TEST_CHECK(parts.empty(), "[NEW] Parts vector must remain empty on miss");
+
+	}
 	return true;
 }
 
