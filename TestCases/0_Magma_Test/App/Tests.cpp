@@ -139,28 +139,62 @@ bool CUnitTester::TestPlaneMiss()
 // -----------------------------------------------------------------------------
 bool CUnitTester::TestCubeSliceSimple()
 {
-	C3DObject* pCube = C3DObject::CreatePrimitive(C3DObject::ePR_Cube, 1.0f);
-	TEST_CHECK(pCube != nullptr, "Failed to create cube");
-
+	
 	// Горизонтальная плоскость ровно через центр куба Y = 0
-	SPlane plane(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f));
+	Vector3 vM0(0.0f, 0.0f, 0.0f);
+	Vector3 vN(0.0f, 1.0f, 0.0f);
 
-	std::vector<C3DObject*> parts;
-	bool bCutResult = CMeshSlicer::Slice(pCube, plane, parts, false); // без разделения на BFS-островки
+	{
+		C3DObject* pCube = C3DObject::CreatePrimitive(C3DObject::ePR_Cube, 1.0f);
+		TEST_CHECK(pCube != nullptr, "[OLD] Failed to create cube");
 
-	TEST_CHECK(bCutResult == true, "Slice must succeed");
-	TEST_CHECK(parts.size() == 2, "Expected exactly 2 parts (Upper and Lower)");
 
-	C3DObject* pUpper = parts[0];
-	C3DObject* pLower = parts[1];
+		SPlane plane(vM0, vN);
 
-	TEST_CHECK(pUpper->GetTriangleCount() > 0, "Upper part must contain triangles");
-	TEST_CHECK(pLower->GetTriangleCount() > 0, "Lower part must contain triangles");
-	TEST_CHECK(pUpper->GetIndices().size() % 3 == 0, "Upper indices must be multiple of 3");
-	TEST_CHECK(pLower->GetIndices().size() % 3 == 0, "Lower indices must be multiple of 3");
+		std::vector<C3DObject*> parts;
+		bool bCutResult = CMeshSlicer::Slice(pCube, plane, parts, false); // без разделения на BFS-островки
 
-	delete pCube;
-	for (auto p : parts) delete p;
+		TEST_CHECK(bCutResult == true, "[OLD] Slice must succeed");
+		TEST_CHECK(parts.size() == 2, "[OLD] Expected exactly 2 parts (Upper and Lower)");
+
+		C3DObject* pUpper = parts[0];
+		C3DObject* pLower = parts[1];
+
+		TEST_CHECK(pUpper->GetTriangleCount() > 0, "[OLD] Upper part must contain triangles");
+		TEST_CHECK(pLower->GetTriangleCount() > 0, "[OLD] Lower part must contain triangles");
+		TEST_CHECK(pUpper->GetIndices().size() % 3 == 0, "[OLD] Upper indices must be multiple of 3");
+		TEST_CHECK(pLower->GetIndices().size() % 3 == 0, "[OLD] Lower indices must be multiple of 3");
+
+		delete pCube;
+		for (auto p : parts) delete p;
+	}
+
+	{
+		C3DObject* pCube = C3DObject::CreatePrimitive(C3DObject::ePR_Cube, 1.0f);
+		TEST_CHECK(pCube != nullptr, "[NEW] Failed to create cube");
+
+		int lNewPartsCount = SliceMesh(*pCube, pCube->GetPosition(), pCube->GetRotation(), pCube->GetScale(), vM0, vN);
+
+		const std::vector<C3DObject*>& parts = pCube->GetChildren();
+
+		bool bCutResult = lNewPartsCount > 0;
+
+		TEST_CHECK(bCutResult == true, "[NEW] Slice must succeed");
+		// Ошибка, наш слайсер почему-то дважды внес в детей сабмеши UP и DN = Childs[4](UP_0,UP_0,DN_0,DN_0)
+		TEST_CHECK(parts.size() == 2, "[NEW] Expected exactly 2 parts (Upper and Lower)");
+
+		C3DObject* pUpper = parts[0];
+		C3DObject* pLower = parts[1];
+
+		TEST_CHECK(pUpper->GetTriangleCount() > 0, "[NEW] Upper part must contain triangles");
+		TEST_CHECK(pLower->GetTriangleCount() > 0, "[NEW] Lower part must contain triangles");
+		TEST_CHECK(pUpper->GetIndices().size() % 3 == 0, "[NEW] Upper indices must be multiple of 3");
+		TEST_CHECK(pLower->GetIndices().size() % 3 == 0, "[NEW] Lower indices must be multiple of 3");
+
+		delete pCube;
+		for (auto p : parts) 
+			delete p;
+	}
 	return true;
 }
 

@@ -395,7 +395,8 @@ int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, 
 
 				//Настраиваем связи дочернего саб меша к родительскому
 				pObj->SetParent(&pIn);
-				pIn.AddChild(pObj);
+				//Потому что внутри SetParent уже происходит parent->m_vChilds.push_back(this)
+				//pIn.AddChild(pObj);
 
 				lRetTotalSubMeshesCount++;
 				lCurSideMesh++;
