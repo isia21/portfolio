@@ -302,22 +302,29 @@ bool CUnitTester::TestPlaneVertexBoundary()
 // -----------------------------------------------------------------------------
 bool CUnitTester::TestSlicerRotationToNormal()
 {
-	CSlicer slicer(10.0f);
+	{
+		CSlicer slicer(10.0f);
 
-	// 1. Дефолтный нож смотрит строго вверх
-	SPlane defaultPlane = slicer.GetPlane();
-	TEST_CHECK(fabs(defaultPlane.Normal.x) < 1e-5f, "Default normal X must be 0");
-	TEST_CHECK(fabs(defaultPlane.Normal.y - 1.0f) < 1e-5f, "Default normal Y must be 1");
-	TEST_CHECK(fabs(defaultPlane.Normal.z) < 1e-5f, "Default normal Z must be 0");
+		// 1. Дефолтный нож смотрит строго вверх
+		SPlane defaultPlane = slicer.GetPlane();
+		TEST_CHECK(fabs(defaultPlane.Normal.x) < 1e-5f, "Default normal X must be 0");
+		TEST_CHECK(fabs(defaultPlane.Normal.y - 1.0f) < 1e-5f, "Default normal Y must be 1");
+		TEST_CHECK(fabs(defaultPlane.Normal.z) < 1e-5f, "Default normal Z must be 0");
 
-	// 2. Поворот вокруг оси X на +90 градусов (нормаль должна повернуться в +Z)
-	slicer.SetRotation(90.0f, 0.0f, 0.0f);
-	SPlane rotatedPlaneX = slicer.GetPlane();
+		// 2. Поворот вокруг оси X на +90 градусов (нормаль должна повернуться в +Z)
+		slicer.SetRotation(90.0f, 0.0f, 0.0f);
+		SPlane rotatedPlaneX = slicer.GetPlane();
 
-	TEST_CHECK(fabs(rotatedPlaneX.Normal.x) < 1e-5f, "Rotated X normal X must be 0");
-	TEST_CHECK(fabs(rotatedPlaneX.Normal.y) < 1e-5f, "Rotated X normal Y must be 0");
-	TEST_CHECK(fabs(rotatedPlaneX.Normal.z - 1.0f) < 1e-5f, "Rotated X normal Z must be +1");
-
+		TEST_CHECK(fabs(rotatedPlaneX.Normal.x) < 1e-5f, "Rotated X normal X must be 0");
+		TEST_CHECK(fabs(rotatedPlaneX.Normal.y) < 1e-5f, "Rotated X normal Y must be 0");
+		TEST_CHECK(fabs(rotatedPlaneX.Normal.z - 1.0f) < 1e-5f, "Rotated X normal Z must be +1");
+	}
+	{
+		/*
+		Данный тест заточен именно под систему слайсера из предыдущей версии.
+		Новая версия слайсера не хранит заготовленный Plane, а реализует разрез, исходя из переданных vM0, vN
+		*/
+	}
 	return true;
 }
 
@@ -326,6 +333,9 @@ bool CUnitTester::TestSlicerRotationToNormal()
 // -----------------------------------------------------------------------------
 bool CUnitTester::TestOBJExportImportIntegrity()
 {
+	/*
+	Данный тест не валидирует работу слайсера/среза, а относится только к внутреннему функционалу по рабте с expoort/import OBJ файлов моделей
+	*/
 	C3DObject* pSphere = C3DObject::CreatePrimitive(C3DObject::ePR_Sphere, 2.0f);
 	pSphere->SetName("Unit_Test_Sphere");
 
