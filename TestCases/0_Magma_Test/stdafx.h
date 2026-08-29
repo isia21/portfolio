@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <unordered_map>
 
 #include <gl/GL.h>
 #pragma comment(lib, "opengl32.lib")

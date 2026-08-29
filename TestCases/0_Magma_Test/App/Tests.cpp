@@ -119,13 +119,8 @@ bool CUnitTester::TestPlaneMiss()
 		int lNewPartsCount = SliceMesh(*pCube, pCube->GetPosition(), pCube->GetRotation(), pCube->GetScale(), vM0, vN);
 
 		const std::vector<C3DObject*> & parts = pCube->GetChildren();
-		//bool bCutResultNew = lNewPartsCount > 0;
-		
-		// Наш слайсер всегда вернет > 0. 
-		// Где == 1, просто означает то, что ВСЕ треуги/модель строго ПОД или НАД срезом
-		// Это надо пофиксить!
-		// А пока
-		bool bCutResultNew = lNewPartsCount > 1;
+		//Если после слайсинга у нас появились сбамеши(дочерних > 0), значит плоскость пересекла наш объект
+		bool bCutResultNew = lNewPartsCount > 0;
 		
 
 		delete pCube;

@@ -341,6 +341,11 @@ int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, 
 	for (const auto& tSrcTriangle : vSrcTres)
 		SliceTriangle(vM0, vN, tSrcTriangle, vAboveTres, vBelowTres, fEpsilon);
 		
+	// FIX: правка контракта
+	// Если по итогу у нас получился ВСЕГО один меш, значит этот МЕШ просто находится строго ПОД/НАд плоскостью
+	// Соотв нам нет необходимости РЕЗАТЬ, т.к. плоскость НЕ задела наш меш
+	if ((vAboveTres.empty() || vBelowTres.empty()))
+		return 0;
 
 	//4. Собираем нарезанные вершины в саб меши
 	std::vector<std::vector<Triangle>> vAboveMeshes = CreateIslands(vAboveTres);
@@ -377,8 +382,8 @@ int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, 
 			{
 				pObj->SetModelColor(pIn.GetModelColor());
 				//TODO: т.к. система координат внутри меша - локальная, нам необходимо создать 
-				//	Новый Translation оффсет, чтоб он совпадал со смешением исходного
-				//	Путем рассчета нового центроида = sum(v3[]) / count(v3[]);
+				//	Новый Translation оффсет, чтоб он совпадал со смещением исходного
+				//	Путем расчета нового центроида = sum(v3[]) / count(v3[]);
 				
 				//sprintf(szNewNameBuff, "%s_%s_%d", pIn.GetName(), strPrefix.c_str(), lCurSideMesh);
 				sprintf_s(szNewNameBuff, sizeof(szNewNameBuff), "%s_%s_%d", pIn.GetName(), pszPrefix, lCurSideMesh);
