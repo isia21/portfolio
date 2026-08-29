@@ -319,6 +319,8 @@ int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, 
 	std::vector<Triangle> vSrcTres;
 	const std::vector<Vertex3D>& vSrcVertices = pIn.GetVertices();
 	const std::vector<unsigned int>& vSrcIndnices = pIn.GetIndices();
+	float fMinDist = FLT_MAX;
+	float fMaxDist = -FLT_MAX;
 	for (int lTrsIdx = 0; lTrsIdx < pIn.GetTriangleCount(); lTrsIdx++)
 	{
 		unsigned int i0 = vSrcIndnices[(lTrsIdx * 3) + 0];
@@ -330,9 +332,24 @@ int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, 
 		const Vertex3D& v1 = LocalToWorldPos(vSrcVertices[i1], vMeshTrs, vMeshRot, vMeshScl);
 		const Vertex3D& v2 = LocalToWorldPos(vSrcVertices[i2], vMeshTrs, vMeshRot, vMeshScl);
 
+		//Собираем инфу о минимальной и максимальной дистанции точек меша от плоскости
+		float fDists[3] = {
+			PointPlaneDistance(vM0, vN, v0),
+			PointPlaneDistance(vM0, vN, v1),
+			PointPlaneDistance(vM0, vN, v2) };
+		for (int lDistId = 0; lDistId < 3; lDistId++)
+		{
+			fMinDist = std::fminf(fMinDist, fDists[lDistId]);
+			fMaxDist = std::fmaxf(fMaxDist, fDists[lDistId]);
+		}
+
 		//emplace_back, вместо push_back, т.к. emplace_back вызывает конструктор структуры
 		vSrcTres.emplace_back(v0, v1, v2);
 	}
+
+	//Если абсолютный минимум/максимум меша лежит В ПРЕДЕЛАХ допуска, т.е. OnPlane - НЕ РЕЖЕМ.
+	if (fMaxDist <= fEpsilon || fMinDist >= -fEpsilon)
+		return 0;
 
 	//3. Нарезаем исходные треугольники плоскостью
 	std::vector<Triangle> vAboveTres;

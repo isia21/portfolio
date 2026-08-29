@@ -262,19 +262,38 @@ bool CUnitTester::TestSinePlaneMultipleIslands()
 // -----------------------------------------------------------------------------
 bool CUnitTester::TestPlaneVertexBoundary()
 {
-	C3DObject* pCube = C3DObject::CreatePrimitive(C3DObject::ePR_Cube, 1.0f);
 
 	// Плоскость лежит на высоте Y = 1.0 (касается верхней грани куба)
-	SPlane tangentPlane(Vector3(0.0f, 1.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f));
+	Vector3 vM0(0.0f, 1.0f, 0.0f);
+	Vector3 vN(0.0f, 1.0f, 0.0f);
+	{
+		C3DObject* pCube = C3DObject::CreatePrimitive(C3DObject::ePR_Cube, 1.0f);
+		SPlane tangentPlane(vM0, vN);
 
-	std::vector<C3DObject*> parts;
-	bool bCutResult = CMeshSlicer::Slice(pCube, tangentPlane, parts, true);
+		std::vector<C3DObject*> parts;
+		bool bCutResult = CMeshSlicer::Slice(pCube, tangentPlane, parts, true);
 
-	// При касании верхней грани все тело остается снизу, нож не делит меш на 2 половины
-	TEST_CHECK(bCutResult == false, "Tangent plane touching boundary vertices should not produce invalid cuts");
+		// При касании верхней грани все тело остается снизу, нож не делит меш на 2 половины
+		TEST_CHECK(bCutResult == false, "[OLD] Tangent plane touching boundary vertices should not produce invalid cuts");
 
-	delete pCube;
-	for (auto p : parts) delete p;
+		delete pCube;
+		for (auto p : parts) delete p;
+	}
+	{
+		C3DObject* pCube = C3DObject::CreatePrimitive(C3DObject::ePR_Cube, 1.0f);
+
+		int lNewPartsCount = SliceMesh(*pCube, pCube->GetPosition(), pCube->GetRotation(), pCube->GetScale(), vM0, vN);
+		const std::vector<C3DObject*>& parts = pCube->GetChildren();
+		bool bCutResult = lNewPartsCount > 0;
+
+		// При касании верхней грани все тело остается снизу, нож не делит меш на 2 половины
+		TEST_CHECK(bCutResult == false, "[NEW] Tangent plane touching boundary vertices should not produce invalid cuts");
+
+		delete pCube;
+		for (auto p : parts) 
+			delete p;
+	}
+
 	return true;
 }
 
