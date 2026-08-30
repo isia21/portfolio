@@ -87,7 +87,6 @@ Vertex3D IntersectPlane(const Vector3& vM0, const Vector3& vN, const Vertex3D& v
 	Аналогичная логика использовалась в AnimColor: ARGB DWORD -> извлечение каналов через mask/shift -> интерполяция каналов -> сборка обратно в DWORD.
 	
 	При необходимости могу предоставить соответствующий фрагмент legacy-кода для подтверждения происхождения данной реализации.
-	*/
 	DWORD dwFrameAColor = vP0.dwColor;
 	DWORD dwFrameBColor = vP1.dwColor;
 
@@ -110,9 +109,12 @@ Vertex3D IntersectPlane(const Vector3& vM0, const Vector3& vN, const Vertex3D& v
 	DWORD dwB = (DWORD)(fBA + (fBB - fBA) * t);
 	if (dwB > 255) dwB = 255;
 	DWORD dwNewColor = D3DCOLOR_ARGB(dwA, dwR, dwG, dwB);
+	*/
 
-	// Создаем новую вершину из найденной позиции от t и найденного цвета от t
-	Vertex3D v3DOut = { v3Out.x, v3Out.y, v3Out.z, dwNewColor };
+
+	// Создаем новую вершину из найденной позиции от t
+	// Цвет вершин среза задаем вручную
+	Vertex3D v3DOut = { v3Out.x, v3Out.y, v3Out.z, 0x80000000};
 
 	return v3DOut;
 }
@@ -311,6 +313,8 @@ Triangle::Triangle(const Vertex3D& v0, const Vertex3D& v1, const Vertex3D& v2)
 int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, const Vector3& vMeshScl, const Vector3& vM0, const Vector3& vN)
 {
 	const float fEpsilon = 1e-5f;
+	float fMinDist = FLT_MAX;
+	float fMaxDist = -FLT_MAX;
 
 	//1. Для начала мы должны очистить возможный предыдуший результат нарезки
 	pIn.ClearChildren();
@@ -319,8 +323,6 @@ int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, 
 	std::vector<Triangle> vSrcTres;
 	const std::vector<Vertex3D>& vSrcVertices = pIn.GetVertices();
 	const std::vector<unsigned int>& vSrcIndnices = pIn.GetIndices();
-	float fMinDist = FLT_MAX;
-	float fMaxDist = -FLT_MAX;
 	for (int lTrsIdx = 0; lTrsIdx < pIn.GetTriangleCount(); lTrsIdx++)
 	{
 		unsigned int i0 = vSrcIndnices[(lTrsIdx * 3) + 0];
@@ -409,6 +411,9 @@ int SliceMesh(C3DObject& pIn, const Vector3& vMeshTrs, const Vector3& vMeshRot, 
 				//Выделяем меш визуально, путем его отрисовки через линии/грани, без заливки
 				pObj->SetRenderType(C3DObject::eRT_Wireframe);
 				pObj->SetVisible(true);
+
+				//Фиксируем, что это часть, а не новый исходный меш
+				pObj->SetObjectType(C3DObject::EObjectType::eOT_MeshParts);
 
 				//Настраиваем связи дочернего саб меша к родительскому
 				pObj->SetParent(&pIn);

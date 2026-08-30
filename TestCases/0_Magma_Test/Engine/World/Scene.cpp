@@ -2,7 +2,7 @@
 
 #include "../Graphics.h"
 #include "Scene.h"
-
+#include "../Math/Math.h"
 //-----------------------------------------------------------------------------
 // Construction / Destruction
 //-----------------------------------------------------------------------------
@@ -629,63 +629,80 @@ void CScene::ExecuteSlicingPipeline()
 			vSources.push_back(pObj);
 	}
 
-
 	// ------
 	// 4. CASCADE SLICING EACH SOURCE NESH
 	// ------
 	size_t totalGeneratedParts = 0;
 	for (C3DObject* pSource : vSources)
 	{
-		// --- Gen#0 : Make DeepCopy for Source object
-		std::vector<C3DObject*> vCurrentGeneration;
-		vCurrentGeneration.push_back(pSource->Clone());
+		// Очередь частей текущего поколения. Начинаем с исходника.
+		std::vector<C3DObject*> vCurrentParts;
+		vCurrentParts.push_back(pSource);
 
-		// --- Slice each objects
 		for (CSlicer* pSlicer : vActiveSlicers)
 		{
-			std::vector<C3DObject*> vNextGeneration;
+			SPlane pPlane = pSlicer->GetPlane();
+			Vector3 vM0 = pPlane.Point;
+			Vector3 vN = pPlane.Normal;
 
-			for (C3DObject* pCurrentPart : vCurrentGeneration)
+			std::vector<C3DObject*> vNextParts;
+
+			for (C3DObject* pCurrentPart : vCurrentParts)
 			{
-				std::vector<C3DObject*> vCutPieces;
+				// Режем ТЕКУЩИЙ кусочек, а не pSource!
+				// (Если pCurrentPart - новосозданный дочерний кусок с мировыми вершинами,
+				// его Trs/Rot/Scl должны быть нейтральными, либо берите его собственные)
+				int lPartsCount = SliceMesh(
+					*pCurrentPart,
+					pCurrentPart->GetPosition(),
+					pCurrentPart->GetRotation(),
+					pCurrentPart->GetScale(),
+					vM0,
+					vN
+				);
 
-				// --- Try to slice current part/object per new Pieces ---
-				if (CMeshSlicer::Slice(pCurrentPart, pSlicer, vCutPieces, true))
+				if (lPartsCount > 0)
 				{
-					// --- Success slicing => new Pieces to next Gen
-					vNextGeneration.insert(vNextGeneration.end(), vCutPieces.begin(), vCutPieces.end());
-					delete pCurrentPart;
+					// Нож разрезал кусок -> забираем его новые дочерние части в следующее поколение
+					for (C3DObject* pChild : pCurrentPart->GetChildren())
+					{
+						vNextParts.push_back(pChild);
+					}
+
+					// ВАЖНО: Если pCurrentPart это промежуточный кусок (не исходный pSource),
+					// его можно скрыть или пометить на удаление, так как он распался на части.
+					if (pCurrentPart != pSource)
+					{
+						pCurrentPart->SetVisible(false);
+					}
 				}
 				else
 				{
-					// --- No slicer influence to object --- 
-					vNextGeneration.push_back(pCurrentPart);
+					// Нож не задел этот кусок -> он переходит в следующее поколение без изменений
+					vNextParts.push_back(pCurrentPart);
 				}
 			}
 
-			vCurrentGeneration = std::move(vNextGeneration);
+			// Переходим к следующему ножу с новым набором кусочков
+			vCurrentParts = std::move(vNextParts);
 		}
-		
+
 		// ------
-		// 5. COLLECT ALL PROCESSED SUB MESHES 
-		// (result of slicing for cur object, the sub meshes marked ad parent-child)
+		// 5. ФИНАЛЬНЫЙ СБОР РЕЗУЛЬТАТОВ
 		// ------
-		pSource->ClearChildren();
-		for (C3DObject* pFinalPart : vCurrentGeneration)
+		// Если объект вообще был разрезан (в vCurrentParts лежат новые куски, а не сам pSource)
+		if (vCurrentParts.size() > 1 || (vCurrentParts.size() == 1 && vCurrentParts[0] != pSource))
 		{
-			pFinalPart->SetObjectType(C3DObject::eOT_MeshParts);
-			pFinalPart->SetVisible(true);
+			pSource->SetVisible(false); // Прячем целый исходник
 
-			pSource->AddChild(pFinalPart);
-
-			m_vObjects.push_back(pFinalPart);
-			++totalGeneratedParts;
+			for (C3DObject* pFinalPart : vCurrentParts)
+			{
+				pFinalPart->SetVisible(true);
+				m_vObjects.push_back(pFinalPart); // Регистрируем финальный кусок на сцене
+				++totalGeneratedParts;
+			}
 		}
-
-		// --- Hide source model ---
-		pSource->SetVisible(false);
 	}
-
 	m_bStructureChanged = true;
 	m_bModified = true;
 

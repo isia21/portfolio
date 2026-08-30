@@ -392,43 +392,8 @@ void C3DObject::Render()
 
 	glPushMatrix();
 
-	// --- 2. PING-PONG effect only for sliced partrs ---
-	Vector3 finalPosition = m_vPosition;
-
-	if (m_eObjectType == eOT_MeshParts)
-	{
-		Vector3 explodeDir = m_vPosition;
-		if (m_pParent != nullptr)
-		{
-			explodeDir.x = m_vPosition.x - m_pParent->GetPosition().x;
-			explodeDir.y = m_vPosition.y - m_pParent->GetPosition().y;
-			explodeDir.z = m_vPosition.z - m_pParent->GetPosition().z;
-		}
-
-		const float fLenSq = explodeDir.x * explodeDir.x + explodeDir.y * explodeDir.y + explodeDir.z * explodeDir.z;
-		if (fLenSq > 1e-6f)
-		{
-			const float fInvLen = 1.0f / sqrtf(fLenSq);
-			explodeDir.x *= fInvLen;
-			explodeDir.y *= fInvLen;
-			explodeDir.z *= fInvLen;
-		}
-		else
-		{
-			explodeDir = { 0.0f, 1.0f, 0.0f };
-		}
-
-		const float fTimeSec = static_cast<float>(GetTickCount64() % 100000) / 1000.0f;
-		const float fPingPong = (sinf(fTimeSec * 2.5f) * 0.5f + 0.5f); // [0.0 .. 1.0]
-		const float fMaxDistance = 1.5f;
-
-		finalPosition.x += explodeDir.x * fPingPong * fMaxDistance;
-		finalPosition.y += explodeDir.y * fPingPong * fMaxDistance;
-		finalPosition.z += explodeDir.z * fPingPong * fMaxDistance;
-	}
-	
 	// --- Object transform ---
-	glTranslatef(finalPosition.x, finalPosition.y, finalPosition.z);
+	glTranslatef(m_vPosition.x, m_vPosition.y, m_vPosition.z);
 
 	glRotatef(m_vRotation.x, 1.0f, 0.0f, 0.0f);
 	glRotatef(m_vRotation.y, 0.0f, 1.0f, 0.0f);
@@ -460,10 +425,10 @@ void C3DObject::Render()
 		const Vertex3D& vertex = m_vVertices[index];
 
 		// --- Prepare vertex color ---
-		const float vertR = static_cast<float>((vertex.dwColor >> 24) & 0xFF) / 255.0f;
-		const float vertG = static_cast<float>((vertex.dwColor >> 16) & 0xFF) / 255.0f;
-		const float vertB = static_cast<float>((vertex.dwColor >> 8) & 0xFF) / 255.0f;
-		const float vertA = static_cast<float>(vertex.dwColor & 0xFF) / 255.0f;
+		const float vertA = static_cast<float>((vertex.dwColor >> 24) & 0xFF) / 255.0f;
+		const float vertR = static_cast<float>((vertex.dwColor >> 16) & 0xFF) / 255.0f;
+		const float vertG = static_cast<float>((vertex.dwColor >> 8) & 0xFF) / 255.0f;
+		const float vertB = static_cast<float>(vertex.dwColor & 0xFF) / 255.0f;
 
 		float finalR = modelR * vertR;
 		float finalG = modelG * vertG;

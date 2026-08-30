@@ -2,7 +2,7 @@
 #include "CommandLine.h"
 
 #include "../Engine/Graphics.h"
-
+#include "../Engine/Math/Math.h"
 #include <iostream>
 
 void CCommandLine::PrintUsage()
@@ -70,7 +70,8 @@ bool CCommandLine::ParsePlane(const char* pszFilePath, SPlane& outPlane)
 
 int CCommandLine::Execute(int argc, char* argv[])
 {
-	_mkdir("Out");
+	_mkdir("OutOld");
+	_mkdir("OutNew");
 
 	if (AttachConsole(ATTACH_PARENT_PROCESS) || AllocConsole())
 	{
@@ -94,15 +95,18 @@ int CCommandLine::Execute(int argc, char* argv[])
 	printf("[CLI] Loading plane: %s\n", pszPlanePath);
 
 	// 1. Load object Mesh (XML or OBJ)
-	C3DObject sourceMesh;
-	if (!sourceMesh.LoadFromFile(pszMeshPath))
+	C3DObject sourceMeshOld;
+	C3DObject sourceMeshNew;
+	if (!sourceMeshOld.LoadFromFile(pszMeshPath))
 	{
 		printf("[CLI_ERROR] Failed to load mesh file: %s\n", pszMeshPath);
 		return EXIT_FAILURE;
 	}
+	//подгрузка копии меша для тестирования через new math
+	sourceMeshNew.LoadFromFile(pszMeshPath);
 
 	printf("[CLI] Mesh loaded successfully (%zu verts, %zu triangles)\n",
-		sourceMesh.GetVertexCount(), sourceMesh.GetTriangleCount());
+		sourceMeshOld.GetVertexCount(), sourceMeshOld.GetTriangleCount());
 
 	// 2. Load slicer params
 	SPlane cuttingPlane;
@@ -116,35 +120,72 @@ int CCommandLine::Execute(int argc, char* argv[])
 		cuttingPlane.Point.x, cuttingPlane.Point.y, cuttingPlane.Point.z,
 		cuttingPlane.Normal.x, cuttingPlane.Normal.y, cuttingPlane.Normal.z);
 
-	// 3. Run slicer n divide on separated islands (BFS)
-	std::vector<C3DObject*> vCutParts;
-	bool bSuccess = CMeshSlicer::Slice(&sourceMesh, cuttingPlane, vCutParts, true);
-
-	if (!bSuccess || vCutParts.empty())
+	//old math
 	{
-		printf("[CLI_WARN] Plane did not intersect mesh or no parts generated.\n");
-		printf("[CLI] Saving 1 original intact mesh: %s1.obj\n", pszOutPrefix);
+		// 3. Run slicer n divide on separated islands (BFS)
+		std::vector<C3DObject*> vCutParts;
+		bool bSuccess = CMeshSlicer::Slice(&sourceMeshOld, cuttingPlane, vCutParts, true);
 
-		char szOutName[MAX_PATH] = {};
-		sprintf_s(szOutName, sizeof(szOutName), "Out/%s1.obj", pszOutPrefix);
-		sourceMesh.ExportToOBJ(szOutName);
-		return EXIT_SUCCESS;
+		if (!bSuccess || vCutParts.empty())
+		{
+			printf("[CLI_WARN] Plane did not intersect mesh or no parts generated.\n");
+			printf("[CLI] Saving 1 original intact mesh: %s1.obj\n", pszOutPrefix);
+
+			char szOutName[MAX_PATH] = {};
+			sprintf_s(szOutName, sizeof(szOutName), "OutOld/%s1.obj", pszOutPrefix);
+			sourceMeshOld.ExportToOBJ(szOutName);
+			return EXIT_SUCCESS;
+		}
+
+		// 4. Export every divided sub mesh in self file 
+		printf("[CLI_SUCCESS] Mesh cut into %zu disconnected pieces!\n", vCutParts.size());
+		for (size_t i = 0; i < vCutParts.size(); ++i)
+		{
+			char szOutName[MAX_PATH] = {};
+			sprintf_s(szOutName, sizeof(szOutName), "OutOld/%s%zu.obj", pszOutPrefix, i + 1);
+
+			vCutParts[i]->ExportToOBJ(szOutName);
+			printf("  -> Saved: %s (%zu vertices, %zu triangles)\n",
+				szOutName, vCutParts[i]->GetVertexCount(), vCutParts[i]->GetTriangleCount());
+
+			delete vCutParts[i];
+		}
 	}
 
-	// 4. Export every divided sub mesh in self file 
-	printf("[CLI_SUCCESS] Mesh cut into %zu disconnected pieces!\n", vCutParts.size());
-	for (size_t i = 0; i < vCutParts.size(); ++i)
+	//new math
 	{
-		char szOutName[MAX_PATH] = {};
-		sprintf_s(szOutName, sizeof(szOutName), "Out/%s%zu.obj", pszOutPrefix, i + 1);
+		// 3. Run slicer n divide on separated islands (BFS)
+		int lSubMeshCount = SliceMesh(sourceMeshNew, sourceMeshNew.GetPosition(), sourceMeshNew.GetRotation(), sourceMeshNew.GetScale(), cuttingPlane.Point, cuttingPlane.Normal);
+		bool bSuccess = lSubMeshCount > 0;
+		const std::vector<C3DObject*> &vCutParts = sourceMeshNew.GetChildren();
 
-		vCutParts[i]->ExportToOBJ(szOutName);
-		printf("  -> Saved: %s (%zu vertices, %zu triangles)\n",
-			szOutName, vCutParts[i]->GetVertexCount(), vCutParts[i]->GetTriangleCount());
 
-		delete vCutParts[i];
+
+		if (!bSuccess || vCutParts.empty())
+		{
+			printf("[CLI_WARN] Plane did not intersect mesh or no parts generated.\n");
+			printf("[CLI] Saving 1 original intact mesh: %s1.obj\n", pszOutPrefix);
+
+			char szOutName[MAX_PATH] = {};
+			sprintf_s(szOutName, sizeof(szOutName), "OutNew/%s1.obj", pszOutPrefix);
+			sourceMeshNew.ExportToOBJ(szOutName);
+			return EXIT_SUCCESS;
+		}
+
+		// 4. Export every divided sub mesh in self file 
+		printf("[CLI_SUCCESS] Mesh cut into %zu disconnected pieces!\n", vCutParts.size());
+		for (size_t i = 0; i < vCutParts.size(); ++i)
+		{
+			char szOutName[MAX_PATH] = {};
+			sprintf_s(szOutName, sizeof(szOutName), "OutNew/%s%zu.obj", pszOutPrefix, i + 1);
+
+			vCutParts[i]->ExportToOBJ(szOutName);
+			printf("  -> Saved: %s (%zu vertices, %zu triangles)\n",
+				szOutName, vCutParts[i]->GetVertexCount(), vCutParts[i]->GetTriangleCount());
+
+			delete vCutParts[i];
+		}
 	}
-
 	printf("[CLI] Batch slicing completed successfully.\n\n");
 	return EXIT_SUCCESS;
 }
